@@ -1,0 +1,23 @@
+FROM elixir:1.6.5
+
+RUN apt-get update
+RUN apt-get install -y erlang-dev erlang-parsetools
+
+RUN mix local.hex --force
+RUN mix local.rebar --force
+
+ENV MIX_ENV test
+ENV TEST_ENV ci
+
+WORKDIR /code
+
+COPY mix.exs mix.lock ./
+COPY config/config.exs config/
+
+RUN mix deps.get
+
+RUN MIX_ENV=${MIX_ENV} mix deps.compile
+
+COPY . .
+
+RUN MIX_ENV=${MIX_ENV} mix compile

@@ -1,0 +1,6 @@
+- type: parallel
+  steps:
+    - command: bin/lint
+      service: app
+    - command: bin/test
+      service: app
