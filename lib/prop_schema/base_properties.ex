@@ -55,8 +55,10 @@ defmodule PropSchema.BaseProperties do
     end
   end
 
-  def generate_prop(field, :string, %{string_type: type}),
-    do: generate_prop(field, :string, %{string_type: type, required: false})
+  def generate_prop(field, :string, %{string_type: type})
+      when type == :ascii or type == :alphanumeric do
+    generate_prop(field, :string, %{string_type: type, required: false})
+  end
 
   def generate_prop(_field, _type, _opts), do: nil
 end
