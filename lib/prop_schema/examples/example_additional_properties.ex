@@ -10,4 +10,10 @@ defmodule PropSchema.ExampleAdditionalProperties do
   end
 
   def generate_prop(_field, _type, _opts), do: nil
+
+  def generate_misc(_) do
+    quote do
+      [{unquote(Atom.to_string(:unused)), integer()}]
+    end
+  end
 end

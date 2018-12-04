@@ -26,6 +26,7 @@ defmodule PropSchema.Executor do
       use ExUnitProperties
       use ExUnit.Case
       import PropSchema.Executor
+      require Logger
 
       Module.eval_quoted(__ENV__, [prop_test(unquote(args))])
     end
@@ -63,6 +64,9 @@ defmodule PropSchema.Executor do
         check all map <- fixed_map(unquote(generators)) do
           changeset = unquote(mod).changeset(struct(unquote(mod)), map)
 
+          if not changeset.valid?,
+            do: IO.puts("Test will fail because: #{inspect(changeset.errors)}")
+
           assert changeset.valid?
         end
       end
@@ -80,6 +84,9 @@ defmodule PropSchema.Executor do
                 changeset =
                   apply(unquote(mod), :changeset, [apply(unquote(mod), :__struct__, []), map])
 
+                if not changeset.valid?,
+                  do: Logger.error("Test will fail because: #{inspect(changeset.errors)}")
+
                 assert changeset.valid?
               end
             end
@@ -92,6 +99,7 @@ defmodule PropSchema.Executor do
                 changeset =
                   apply(unquote(mod), :changeset, [apply(unquote(mod), :__struct__, []), map])
 
+                if changeset.valid?, do: Logger.error("Test will fail because: No errors")
                 refute changeset.valid?
               end
             end
@@ -104,6 +112,9 @@ defmodule PropSchema.Executor do
                 changeset =
                   apply(unquote(mod), :changeset, [apply(unquote(mod), :__struct__, []), map])
 
+                if not changeset.valid?,
+                   do: Logger.error("Test will fail because: #{inspect(changeset.errors)}")
+
                 assert changeset.valid?
               end
             end
@@ -115,6 +126,7 @@ defmodule PropSchema.Executor do
   defp generate_props(props, additional_props) do
     props
     |> Enum.map(fn {field, {type, opts}} -> generate_prop(field, type, opts, additional_props) end)
+    |> generate_misc(nil, additional_props)
     |> Enum.reject(&is_nil(&1))
   end
 
@@ -127,7 +139,19 @@ defmodule PropSchema.Executor do
       _ ->
         nil
     end)
+    |> generate_misc(excluded, additional_props)
     |> Enum.reject(&is_nil(&1))
+  end
+
+  defp generate_misc(properties, _excluded, nil), do: properties
+
+  defp generate_misc(properties, excluded, additional_props) do
+    additional_props
+    |> apply(:generate_misc, [excluded])
+    |> Kernel.++(properties)
+    |> List.flatten()
+  rescue
+    _ -> properties
   end
 
   defp generate_prop(field, type, opts, nil), do: Properties.generate_prop(field, type, opts)

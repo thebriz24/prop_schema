@@ -22,4 +22,7 @@ defmodule PropSchema.AdditionalProperties do
   """
   @callback generate_prop(atom(), atom(), map()) :: Types.ast_expression()
   @optional_callbacks generate_prop: 3
+
+  @callback generate_misc(Types.excluded()) :: [Types.ast_expression()]
+  @optional_callbacks generate_misc: 1
 end
