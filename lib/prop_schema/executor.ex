@@ -65,7 +65,7 @@ defmodule PropSchema.Executor do
           changeset = unquote(mod).changeset(struct(unquote(mod)), map)
 
           if not changeset.valid?,
-            do: IO.puts("Test will fail because: #{inspect(changeset.errors)}")
+            do: Logger.error("Test will fail because: #{inspect(changeset.errors)}")
 
           assert changeset.valid?
         end
@@ -78,11 +78,12 @@ defmodule PropSchema.Executor do
       props,
       fn
         {field, {_, %{default: default, required: true}}} = prop when not is_nil(default) ->
+          generators = generate_props(prop, props, additional_props)
+
           quote do
             property "valid changeset - missing #{unquote(field)}" do
-              check all map <- fixed_map(unquote(generate_props(prop, props, additional_props))) do
-                changeset =
-                  apply(unquote(mod), :changeset, [apply(unquote(mod), :__struct__, []), map])
+              check all map <- fixed_map(unquote(generators)) do
+                changeset = unquote(mod).changeset(struct(unquote(mod)), map)
 
                 if not changeset.valid?,
                   do: Logger.error("Test will fail because: #{inspect(changeset.errors)}")
@@ -93,11 +94,12 @@ defmodule PropSchema.Executor do
           end
 
         {field, {_, %{required: true}}} = prop ->
+          generators = generate_props(prop, props, additional_props)
+
           quote do
             property "invalid changeset - missing #{unquote(field)}" do
-              check all map <- fixed_map(unquote(generate_props(prop, props, additional_props))) do
-                changeset =
-                  apply(unquote(mod), :changeset, [apply(unquote(mod), :__struct__, []), map])
+              check all map <- fixed_map(unquote(generators)) do
+                changeset = unquote(mod).changeset(struct(unquote(mod)), map)
 
                 if changeset.valid?, do: Logger.error("Test will fail because: No errors")
                 refute changeset.valid?
@@ -106,14 +108,15 @@ defmodule PropSchema.Executor do
           end
 
         {field, _} = prop ->
+          generators = generate_props(prop, props, additional_props)
+
           quote do
             property "valid changeset - missing #{unquote(field)}" do
-              check all map <- fixed_map(unquote(generate_props(prop, props, additional_props))) do
-                changeset =
-                  apply(unquote(mod), :changeset, [apply(unquote(mod), :__struct__, []), map])
+              check all map <- fixed_map(unquote(generators)) do
+                changeset = unquote(mod).changeset(struct(unquote(mod)), map)
 
                 if not changeset.valid?,
-                   do: Logger.error("Test will fail because: #{inspect(changeset.errors)}")
+                  do: Logger.error("Test will fail because: #{inspect(changeset.errors)}")
 
                 assert changeset.valid?
               end
