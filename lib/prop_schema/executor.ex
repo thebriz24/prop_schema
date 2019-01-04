@@ -4,8 +4,8 @@ defmodule PropSchema.Executor do
     Once the tests are all constructed the tests will run through the normal `mix test` routine.
   """
 
-  alias PropSchema.BaseProperties, as: Properties
-  alias PropSchema.Types
+  alias PropSchema.{Generator, Types}
+  require Generator
 
   @type prop_test_args :: [to_test: atom(), additional_properties: atom()]
 
@@ -32,10 +32,7 @@ defmodule PropSchema.Executor do
     end
   end
 
-  @doc """
-   Can be used independently, but personally I'd just use `__using__/1`.
-  """
-  @spec prop_test(prop_test_args()) :: Types.ast_expression()
+  @doc false
   defmacro prop_test(args) do
     quote do
       [
@@ -57,115 +54,22 @@ defmodule PropSchema.Executor do
   end
 
   def __create_prop_test__(mod, :all_fields, props, additional_props) do
-    generators = generate_props(props, additional_props)
-
-    quote do
-      property "valid changeset" do
-        check all map <- fixed_map(unquote(generators)) do
-          changeset = unquote(mod).changeset(struct(unquote(mod)), map)
-
-          if not changeset.valid?,
-            do: Logger.error("Test will fail because: #{inspect(changeset.errors)}")
-
-          assert changeset.valid?
-        end
-      end
-    end
+    Generator.generate_valid_prop_test(mod, props, additional_props)
   end
 
   def __create_prop_test__(mod, props, additional_props) do
     Enum.map(
       props,
       fn
-        {field, {_, %{default: default, required: true}}} = prop when not is_nil(default) ->
-          generators = generate_props(prop, props, additional_props)
+        {_, {_, %{default: default, required: true}}} = prop when not is_nil(default) ->
+          Generator.generate_valid_prop_test(mod, prop, props, additional_props)
 
-          quote do
-            property "valid changeset - missing #{unquote(field)}" do
-              check all map <- fixed_map(unquote(generators)) do
-                changeset = unquote(mod).changeset(struct(unquote(mod)), map)
+        {_, {_, %{required: true}}} = prop ->
+          Generator.generate_invalid_prop_test(mod, prop, props, additional_props)
 
-                if not changeset.valid?,
-                  do: Logger.error("Test will fail because: #{inspect(changeset.errors)}")
-
-                assert changeset.valid?
-              end
-            end
-          end
-
-        {field, {_, %{required: true}}} = prop ->
-          generators = generate_props(prop, props, additional_props)
-
-          quote do
-            property "invalid changeset - missing #{unquote(field)}" do
-              check all map <- fixed_map(unquote(generators)) do
-                changeset = unquote(mod).changeset(struct(unquote(mod)), map)
-
-                if changeset.valid?, do: Logger.error("Test will fail because: No errors")
-                refute changeset.valid?
-              end
-            end
-          end
-
-        {field, _} = prop ->
-          generators = generate_props(prop, props, additional_props)
-
-          quote do
-            property "valid changeset - missing #{unquote(field)}" do
-              check all map <- fixed_map(unquote(generators)) do
-                changeset = unquote(mod).changeset(struct(unquote(mod)), map)
-
-                if not changeset.valid?,
-                  do: Logger.error("Test will fail because: #{inspect(changeset.errors)}")
-
-                assert changeset.valid?
-              end
-            end
-          end
+        prop ->
+          Generator.generate_valid_prop_test(mod, prop, props, additional_props)
       end
     )
-  end
-
-  defp generate_props(props, additional_props) do
-    props
-    |> Enum.map(fn {field, {type, opts}} -> generate_prop(field, type, opts, additional_props) end)
-    |> generate_misc(nil, additional_props)
-    |> Enum.reject(&is_nil(&1))
-  end
-
-  defp generate_props({excluded, _}, props, additional_props) do
-    props
-    |> Enum.map(fn
-      {field, {type, opts}} when field != excluded ->
-        generate_prop(field, type, opts, additional_props)
-
-      _ ->
-        nil
-    end)
-    |> generate_misc(excluded, additional_props)
-    |> Enum.reject(&is_nil(&1))
-  end
-
-  defp generate_misc(properties, _excluded, nil), do: properties
-
-  defp generate_misc(properties, excluded, additional_props) do
-    additional_props
-    |> apply(:generate_misc, [excluded])
-    |> Kernel.++(properties)
-    |> List.flatten()
-  rescue
-    _ -> properties
-  end
-
-  defp generate_prop(field, type, opts, nil), do: Properties.generate_prop(field, type, opts)
-
-  defp generate_prop(field, type, opts, additional_props) do
-    case apply(additional_props, :generate_prop, [field, type, opts]) do
-      nil ->
-        Properties.generate_prop(field, type, opts)
-
-      expression ->
-        expression
-    end
   end
 end

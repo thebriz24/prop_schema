@@ -1,11 +1,10 @@
 defmodule PropSchema.ExampleAdditionalProperties do
   @moduledoc false
   @behaviour PropSchema.AdditionalProperties
-  use ExUnitProperties
 
   def generate_prop(field, :float, %{positive: true, required: true}) do
     quote do
-      {unquote(Atom.to_string(field)), float(min: 1)}
+      {unquote(Atom.to_string(field)), StreamData.float(min: 1)}
     end
   end
 
@@ -13,7 +12,7 @@ defmodule PropSchema.ExampleAdditionalProperties do
 
   def generate_misc(_) do
     quote do
-      [{unquote(Atom.to_string(:unused)), integer()}]
+      [{unquote(Atom.to_string(:unused)), StreamData.integer()}]
     end
   end
 end
