@@ -23,6 +23,17 @@ defmodule PropSchema.AdditionalProperties do
   @callback generate_prop(atom(), atom(), map()) :: Types.ast_expression()
   @optional_callbacks generate_prop: 3
 
-  @callback generate_misc(Types.excluded()) :: [Types.ast_expression()]
+  @doc """
+  Implement to define miscellaneous properties.
+
+  ## Example
+
+      def generate_misc(:test_int) do
+        quote do
+          {"decoy_int", integer()}
+        end
+      end
+  """
+  @callback generate_misc(Types.excluded_field()) :: [Types.ast_expression()]
   @optional_callbacks generate_misc: 1
 end

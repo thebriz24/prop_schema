@@ -1,5 +1,6 @@
 defmodule Mix.Tasks.PropSchema.Print do
   use Mix.Task
+  alias Mix.Tasks.Compile
   alias PropSchema.Executor
   require Logger
   require Executor
@@ -17,12 +18,14 @@ defmodule Mix.Tasks.PropSchema.Print do
     Options:
 
       output_path         Will output the results to a file at the given path. If file doesn't exist, it will be created
-      additional_props    A module where the custom properties you have written are found
+      additional_props    A module where the custom properties you have written are found, if they are in the test
+                            directory prepend `MIX_ENV=test` to the command
   """
 
   def run(args) do
     {parsed, argv} = parse_args(args)
     print_help(parsed)
+    Compile.run(args)
     module = get_module(argv)
     additional = get_additional(parsed)
 
