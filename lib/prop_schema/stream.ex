@@ -15,11 +15,11 @@ defmodule PropSchema.Stream do
         require PropSchema.Stream
         PropSchema.Stream.generate_complete_map(PropSchema.ExampleModule, PropSchema.ExampleAdditionalProperties)
 
-        def get_ten(), do: complete() |> Enum.take(10)
+        def get_ten(), do: Enum.take(complete(), 10)
       end
   """
   @spec generate_complete_map(atom(), atom()) :: Types.ast_expression()
-  defmacro generate_complete_map(mod, additional_props) do
+  defmacro generate_complete_map(mod, additional_props \\ nil) do
     schema = Macro.expand_once(mod, __ENV__).__prop_schema__()
     adds = Macro.expand_once(additional_props, __ENV__)
 
@@ -39,11 +39,11 @@ defmodule PropSchema.Stream do
         require PropSchema.Stream
         PropSchema.Stream.generate_incomplete_map(PropSchema.ExampleModule, :test_int, PropSchema.ExampleAdditionalProperties)
 
-        def get_ten(excluded), do: incomplete(excluded) |> Enum.take(10)
+        def get_ten(excluded), do: excluded |> incomplete() |> Enum.take(10)
       end
   """
   @spec generate_incomplete_map(atom(), atom(), atom()) :: Types.ast_expression()
-  defmacro generate_incomplete_map(mod, excluded, additional_props) do
+  defmacro generate_incomplete_map(mod, excluded, additional_props \\ nil) do
     schema = Macro.expand_once(mod, __ENV__)
     adds = Macro.expand_once(additional_props, __ENV__)
     quoted_map(schema, excluded, adds)
@@ -58,10 +58,10 @@ defmodule PropSchema.Stream do
           require PropSchema.Stream
           PropSchema.Stream.generate_all_incomplete_maps(PropSchema.ExampleModule, PropSchema.ExampleAdditionalProperties)
 
-          def get_ten(excluded), do: incomplete(excluded) |> Enum.take(10)
+          def get_ten(excluded), do: excluded |> incomplete() |> Enum.take(10)
         end
   """
-  defmacro generate_all_incomplete_maps(mod, additional_props) do
+  defmacro generate_all_incomplete_maps(mod, additional_props \\ nil) do
     schema = Macro.expand_once(mod, __ENV__)
     adds = Macro.expand_once(additional_props, __ENV__)
     quoted = Enum.map(schema.__prop_schema__(), &quoted_map(schema, &1, adds))

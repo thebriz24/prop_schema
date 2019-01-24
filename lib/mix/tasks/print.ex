@@ -7,6 +7,51 @@ defmodule Mix.Tasks.PropSchema.Print do
 
   @moduledoc """
     Prints the property tests generated for the given module. Use `--help` to see usage directions.
+
+  ## Example
+
+        prop_schema "example" do
+          prop_field(:example_string, :string, string_type: :alphanumeric, required: true)
+          prop_field(:example_int, :integer, postive: true, required: false)
+          field(:example_float, :float)
+        end
+
+    Will generate:
+
+        property("valid changeset") do
+          check(all(map <- StreamData.fixed_map([{"example_int", StreamData.one_of([StreamData.integer(), StreamData.constant(nil)])}, {"example_string", StreamData.string(:alphanumeric, min_length: 1)}]))) do
+            changeset = PropSchema.ExampleModule.changeset(struct(PropSchema.ExampleModule), map)
+            (fn changeset ->
+              if(not(changeset.valid?())) do
+                Logger.error("Test will fail because: \#{inspect(changeset.errors())}")
+              end
+              assert(changeset.valid?())
+            end).(changeset)
+          end
+
+        property("valid changeset - missing example_int") do
+          check(all(map <- StreamData.fixed_map([{"example_string", StreamData.string(:alphanumeric, min_length: 1)}]))) do
+            changeset = PropSchema.ExampleModule.changeset(struct(PropSchema.ExampleModule), map)
+            (fn changeset ->
+              if(not(changeset.valid?())) do
+                Logger.error("Test will fail because: \#{inspect(changeset.errors())}")
+              end
+              assert(changeset.valid?())
+            end).(changeset)
+          end
+        end
+
+        property("invalid changeset - missing example_string") do
+          check(all(map <- StreamData.fixed_map([{"example_int", StreamData.one_of([StreamData.integer(), StreamData.constant(nil)])}]))) do
+            changeset = PropSchema.ExampleModule.changeset(struct(PropSchema.ExampleModule), map)
+            (fn changeset ->
+              if(changeset.valid?()) do
+                Logger.error("Test will fail because: No errors")
+              end
+              refute(changeset.valid?())
+            end).(changeset)
+          end
+        end
   """
 
   @shortdoc """

@@ -49,3 +49,6 @@ end
 ```
 
 Then run `mix test`. In this example it will make 3 prop tests.
+
+
+Or for a more realistic example see example [module](https://github.com/podium/prop_schema/blob/master/lib/prop_schema/examples/animagus/csv_mapping.ex), [properties](https://github.com/podium/prop_schema/blob/master/lib/prop_schema/examples/animagus/csv_mapping_properties.ex), and [generated tests](https://github.com/podium/prop_schema/blob/master/lib/prop_schema/examples/animagus/results_of_print.ex).

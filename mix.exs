@@ -1,19 +1,21 @@
 defmodule PropSchema.MixProject do
   use Mix.Project
 
-  @version "0.2.1"
+  @version "0.3.0"
 
   def project do
     [
       app: :prop_schema,
       version: @version,
       elixir: ">= 1.5.0",
+      elixirc_paths: ["lib", "test/support"],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       docs: docs(),
       name: "PropSchema",
       package: package(),
-      description: description()
+      description: description(),
+      aliases: aliases()
     ]
   end
 
@@ -56,6 +58,12 @@ defmodule PropSchema.MixProject do
       main: "PropSchema",
       logo: "misc/pink-p.png",
       extras: ["README.md"]
+    ]
+  end
+
+  defp aliases do
+    [
+      credo: ["credo --strict"]
     ]
   end
 end
