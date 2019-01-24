@@ -1,7 +1,7 @@
 defmodule PropSchema.MixProject do
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.3.1"
 
   def project do
     [
@@ -48,7 +48,7 @@ defmodule PropSchema.MixProject do
         "GitHub" => "https://github.com/podium/prop_schema",
         "Docs" => "https://hexdocs.pm/prop_schema/#{@version}"
       },
-      maintainers: ["Podium", "Brandon Bennett"],
+      maintainers: ["Podium", "Brandon Bennett", "Kelsey Heidarian", "Rob Hughes"],
       source_url: "https://github.com/podium/prop_schema"
     ]
   end

@@ -79,13 +79,13 @@ defmodule PropSchema.BaseProperties do
     end
   end
 
-  def generate_prop(field, module, %{cardinality: :many, additional_props: adds})
+  def generate_prop(field, module, %{cardinality: :many, additional_props: adds} = map)
       when is_atom(module) do
     quote do
       {unquote(Atom.to_string(field)),
        StreamData.list_of(
          unquote(Generator.generate_complete_map(module.__prop_schema__(), adds)),
-         min_length: 1
+         min_length: 1, max_length: unquote(Map.get(map, :max_length, 5))
        )}
     end
   end
@@ -94,7 +94,7 @@ defmodule PropSchema.BaseProperties do
         cardinality: :many_to_many,
         additional_props: adds,
         disabled: false
-      })
+      } = map)
       when is_atom(module) do
     prop_schema =
       Enum.map(module.__prop_schema__(), fn
@@ -108,7 +108,7 @@ defmodule PropSchema.BaseProperties do
     quote do
       {unquote(Atom.to_string(field)),
        StreamData.list_of(unquote(Generator.generate_complete_map(prop_schema, adds)),
-         min_length: 1
+         min_length: 1, max_length: unquote(Map.get(map, :max_length, 5))
        )}
     end
   end

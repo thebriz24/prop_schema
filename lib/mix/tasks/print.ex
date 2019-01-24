@@ -63,8 +63,8 @@ defmodule Mix.Tasks.PropSchema.Print do
     Options:
 
       output_path         Will output the results to a file at the given path. If file doesn't exist, it will be created
-      additional_props    A module where the custom properties you have written are found, if they are in the test
-                            directory prepend `MIX_ENV=test` to the command
+      additional_props    A module where the custom properties you have written are found. Make sure the compiler will
+                            actually compile the module for the dev environemnt.
   """
 
   def run(args) do
