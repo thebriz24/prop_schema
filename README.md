@@ -3,7 +3,7 @@
 [![Codeship Status for podium/prop_schema](https://app.codeship.com/projects/4eb5b1a0-f733-0136-4d7f-3a9020bdf416/status?branch=master)](/projects/321150)
 
 An extension of both `Ecto.Schema` and `ExUnitProperties` for auto-generation of changeset property tests.
-Consists of two main modules: `PropSchema` and `PropSchema.Executor`
+Consists of two main modules: `PropSchema` and `PropSchema.TestHarness`
 
 ## Installation
 
@@ -45,7 +45,7 @@ end
 In example_module_test.ex:
 ```elixir
 defmodule ExampleModuleTest do
-  use PropSchema.Executor, to_test: PropSchema.ExampleModule
+  use PropSchema.TestHarness, to_test: PropSchema.ExampleModule
 end
 ```
 
