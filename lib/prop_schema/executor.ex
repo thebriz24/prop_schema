@@ -4,7 +4,7 @@ defmodule PropSchema.Executor do
     Once the tests are all constructed the tests will run through the normal `mix test` routine.
   """
 
-  if Mix.env() == :dev, do: @moduledoc deprecated: "Use `PropSchema.TestHarness` instead"
+  if Mix.env() == :dev, do: @moduledoc(deprecated: "Use `PropSchema.TestHarness` instead")
 
   alias PropSchema.Generator
   require Generator

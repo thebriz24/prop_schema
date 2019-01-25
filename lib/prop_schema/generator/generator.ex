@@ -6,7 +6,8 @@ defmodule PropSchema.Generator do
   @type prop_details :: {atom(), %{optional(atom()) => any()}}
   @type prop :: {atom(), prop_details()}
   @type props :: %{optional(atom()) => prop_details()}
-  @type basic_type :: integer() | float() | atom() | reference() | pid() | tuple() | [any()] | String.t()
+  @type basic_type ::
+          integer() | float() | atom() | reference() | pid() | tuple() | [any()] | String.t()
   @type ast_expression :: {atom(), Keyword.t(), [ast_expression()]} | basic_type()
 
   @spec generate_valid_prop_test(atom(), props(), atom()) :: ast_expression()
@@ -47,6 +48,7 @@ defmodule PropSchema.Generator do
 
   defp generate_prop_test(mod, generators, message, correct?) do
     quote do
+      @tag generated: true
       property unquote(message) do
         check all map <- unquote(generators) do
           changeset = unquote(mod).changeset(struct(unquote(mod)), map)
