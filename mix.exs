@@ -1,7 +1,7 @@
 defmodule PropSchema.MixProject do
   use Mix.Project
 
-  @version "0.3.1"
+  @version "0.4.0"
 
   def project do
     [
@@ -57,7 +57,12 @@ defmodule PropSchema.MixProject do
     [
       main: "PropSchema",
       logo: "misc/pink-p.png",
-      extras: ["README.md"]
+      extras: ["README.md"],
+      groups_for_modules: [
+        Generators: [PropSchema.Stream, PropSchema.TestHarness],
+        Customizers: [PropSchema.AdditionalProperties],
+        Deprecated: [PropSchema.Executor]
+      ]
     ]
   end
 

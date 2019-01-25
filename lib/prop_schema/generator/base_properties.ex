@@ -5,13 +5,13 @@ defmodule PropSchema.BaseProperties do
   # Base collection of properties according to their requirement and other considerations.
   # See `PropSchema.AdditionalProperties` for how to add to this collection or override any of these.
 
-  alias PropSchema.{Generator, Types}
+  alias PropSchema.Generator
 
   @doc """
   Covers a few cases of the `integer` and `string` types. For integers `required` and `positive` are provided. For strings `required` and `string_type` are provided.
   """
   @spec generate_prop(atom(), :integer | :string, %{optional(atom()) => atom() | boolean()}) ::
-          Types.ast_expression()
+          {String.t(), StreamData.t()}
   def generate_prop(field, type, opts)
 
   def generate_prop(field, :integer, %{positive: true, required: true}) do
@@ -85,16 +85,21 @@ defmodule PropSchema.BaseProperties do
       {unquote(Atom.to_string(field)),
        StreamData.list_of(
          unquote(Generator.generate_complete_map(module.__prop_schema__(), adds)),
-         min_length: 1, max_length: unquote(Map.get(map, :max_length, 5))
+         min_length: 1,
+         max_length: unquote(Map.get(map, :max_length, 5))
        )}
     end
   end
 
-  def generate_prop(field, module, %{
-        cardinality: :many_to_many,
-        additional_props: adds,
-        disabled: false
-      } = map)
+  def generate_prop(
+        field,
+        module,
+        %{
+          cardinality: :many_to_many,
+          additional_props: adds,
+          disabled: false
+        } = map
+      )
       when is_atom(module) do
     prop_schema =
       Enum.map(module.__prop_schema__(), fn
@@ -108,7 +113,8 @@ defmodule PropSchema.BaseProperties do
     quote do
       {unquote(Atom.to_string(field)),
        StreamData.list_of(unquote(Generator.generate_complete_map(prop_schema, adds)),
-         min_length: 1, max_length: unquote(Map.get(map, :max_length, 5))
+         min_length: 1,
+         max_length: unquote(Map.get(map, :max_length, 5))
        )}
     end
   end

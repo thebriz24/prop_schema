@@ -1,7 +1,5 @@
 defmodule Animagus.CSVMapping do
-  @moduledoc """
-    A model for the csv_mappings table. Include functionality for changeset validations and display/index lookups.
-  """
+  @moduledoc false
 
   use PropSchema
   alias Ecto.Changeset
@@ -85,9 +83,9 @@ defmodule Animagus.CSVMapping do
     |> validate_no_duplicate_fields()
     |> validate_index_lies_within_expected()
     |> Changeset.unique_constraint(
-         :event_name,
-         name: :animagus_csv_mappings_integration_name_event_name_index
-       )
+      :event_name,
+      name: :animagus_csv_mappings_integration_name_event_name_index
+    )
   end
 
   @doc """

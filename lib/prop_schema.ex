@@ -66,7 +66,7 @@ defmodule PropSchema do
 
   defmacro __using__(_opts) do
     quote do
-      import PropSchema, only: [prop_schema: 2, prop_embedded: 1]
+      import PropSchema, only: [prop_schema: 2, prop_embedded: 1, prop_embedded_schema: 1]
       use Ecto.Schema
       Module.register_attribute(__MODULE__, :prop_schema_fields, accumulate: true)
     end
@@ -96,18 +96,27 @@ defmodule PropSchema do
   end
 
   @doc """
-  High school english class time! `prop_embedded/1` is to `prop_schema/2` as `Ecto.Schema.embedded_schema/1` is to `Ecto.Schema.schema/2`
+  Deprecated in favor of `prop_embedded_schema/1`, see for usage details.
+  """
+  @deprecated "Use prop_embedded_schema/1 instead"
+  @spec prop_embedded(do: Types.ast_expression()) :: Types.ast_expression()
+  defmacro prop_embedded(do: block) do
+    embedded_schema(block)
+  end
+
+  @doc """
+  High school english class time! `prop_embedded_schema/1` is to `prop_schema/2` as `Ecto.Schema.embedded_schema/1` is to `Ecto.Schema.schema/2`
 
   ## Examples
 
-      prop_embedded do
+      prop_embedded_schema do
         prop_field(:example_string, :string, string_type: :alphanumeric, required: true)
         prop_field(:example_int, :integer, postive: true, required: false)
         field(:example_float, :float)
       end
   """
-  @spec prop_embedded(do: Types.ast_expression()) :: Types.ast_expression()
-  defmacro prop_embedded(do: block) do
+  @spec prop_embedded_schema(do: Types.ast_expression()) :: Types.ast_expression()
+  defmacro prop_embedded_schema(do: block) do
     embedded_schema(block)
   end
 
@@ -280,6 +289,53 @@ defmodule PropSchema do
       )
 
       many_to_many(unquote(name), unquote(queryable), unquote(ecto_opts))
+    end
+  end
+
+  @valid_embeds_one_options [:strategy, :on_replace, :source]
+  @doc """
+    Declares a field in `__prop_schema__/2` which corresponds with a provided generator that will build the associated struct for you.
+    The only addition to the normal `Ecto.Schema.embeds_one/3` call is the `:additional_props` option which will tell the generator where
+    to find the additional props for building the associated struct.
+  """
+  @spec prop_embeds_one(atom(), module(), Keyword.t()) :: Types.ast_expression()
+  defmacro prop_embeds_one(name, queryable, opts \\ []) do
+    ecto_opts =
+      Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_one_options, k) end)
+
+    quote do
+      PropSchema.__field__(
+        __MODULE__,
+        unquote(name),
+        unquote(queryable),
+        unquote(opts ++ [cardinality: :one])
+      )
+
+      embeds_one(unquote(name), unquote(queryable), unquote(ecto_opts))
+    end
+  end
+
+  @valid_embeds_many_options [:strategy, :on_replace, :source]
+
+  @doc """
+  Declares a field in `__prop_schema__/2` which corresponds with a provided generator that will build the list of associated structs for you.
+  The only addition to the normal `Ecto.Schema.embeds_many/3` call is the `:additional_props` option which will tell the generator where
+  to find the additional props for building the associated structs.
+  """
+  @spec prop_embeds_many(atom(), module(), Keyword.t()) :: Types.ast_expression()
+  defmacro prop_embeds_many(name, queryable, opts \\ []) do
+    ecto_opts =
+      Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_many_options, k) end)
+
+    quote do
+      PropSchema.__field__(
+        __MODULE__,
+        unquote(name),
+        unquote(queryable),
+        unquote(opts ++ [cardinality: :many])
+      )
+
+      embeds_many(unquote(name), unquote(queryable), unquote(ecto_opts))
     end
   end
 end

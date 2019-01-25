@@ -3,21 +3,31 @@ defmodule PropSchema.Generator do
 
   alias PropSchema.BaseProperties, as: Properties
 
+  @type prop_details :: {atom(), %{optional(atom()) => any()}}
+  @type prop :: {atom(), prop_details()}
+  @type props :: %{optional(atom()) => prop_details()}
+  @type basic_type :: integer() | float() | atom() | reference() | pid() | tuple() | [any()] | String.t()
+  @type ast_expression :: {atom(), Keyword.t(), [ast_expression()]} | basic_type()
+
+  @spec generate_valid_prop_test(atom(), props(), atom()) :: ast_expression()
   def generate_valid_prop_test(mod, props, additional_props) do
     generators = generate_complete_map(props, additional_props)
     generate_prop_test(mod, generators, "valid changeset", valid?())
   end
 
+  @spec generate_valid_prop_test(atom(), prop(), props(), atom()) :: ast_expression()
   def generate_valid_prop_test(mod, {field, _} = prop, props, additional_props) do
     generators = generate_incomplete_map(prop, props, additional_props)
     generate_prop_test(mod, generators, "valid changeset - missing #{field}", valid?())
   end
 
+  @spec generate_invalid_prop_test(atom(), prop(), props(), atom()) :: ast_expression()
   def generate_invalid_prop_test(mod, {field, _} = prop, props, additional_props) do
     generators = generate_incomplete_map(prop, props, additional_props)
     generate_prop_test(mod, generators, "invalid changeset - missing #{field}", invalid?())
   end
 
+  @spec generate_complete_map(props(), atom()) :: ast_expression()
   def generate_complete_map(props, additional_props) do
     generators = generate_props(props, additional_props)
 
@@ -26,6 +36,7 @@ defmodule PropSchema.Generator do
     end
   end
 
+  @spec generate_incomplete_map(prop(), props(), atom()) :: ast_expression()
   def generate_incomplete_map(prop, props, additional_props) do
     generators = generate_props(prop, props, additional_props)
 

@@ -1,10 +1,8 @@
-defmodule PropSchema.Executor do
+defmodule PropSchema.TestHarness do
   @moduledoc """
     Reads the `prop_schema` information from the provided module. Then it constructs a series of prop tests according to provided field requirements and other considerations declared in the schema.
     Once the tests are all constructed the tests will run through the normal `mix test` routine.
   """
-
-  if Mix.env() == :dev, do: @moduledoc deprecated: "Use `PropSchema.TestHarness` instead"
 
   alias PropSchema.Generator
   require Generator
@@ -20,7 +18,7 @@ defmodule PropSchema.Executor do
   ## Example
 
       defmodule PropSchemaTest do
-        use PropSchema.Executor,
+        use PropSchema.TestHarness,
           to_test: PropSchema.TestModule,
           additional_properties: PropSchema.TestAdditionalProperties
       end
@@ -30,7 +28,7 @@ defmodule PropSchema.Executor do
     quote do
       use ExUnitProperties
       use ExUnit.Case
-      import PropSchema.Executor
+      import PropSchema.TestHarness
       require Logger
 
       Module.eval_quoted(__ENV__, [prop_test(unquote(args))])
@@ -42,14 +40,14 @@ defmodule PropSchema.Executor do
     quote do
       [
         # credo:disable-for-next-line
-        PropSchema.Executor.__create_prop_test__(
+        PropSchema.TestHarness.__create_prop_test__(
           unquote(args[:to_test]),
           :all_fields,
           unquote(args[:to_test]).__prop_schema__(),
           unquote(args[:additional_properties])
         ),
         # credo:disable-for-next-line
-        PropSchema.Executor.__create_prop_test__(
+        PropSchema.TestHarness.__create_prop_test__(
           unquote(args[:to_test]),
           unquote(args[:to_test]).__prop_schema__(),
           unquote(args[:additional_properties])
