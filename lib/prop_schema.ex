@@ -1,7 +1,7 @@
 defmodule PropSchema do
   @moduledoc """
     An extension on `Ecto.Schema` used to generate property tests. Schema can be further augmented
-    based on additional options, which will be read by the corresponding `PropSchema.Executor` module
+    based on additional options, which will be read by the corresponding `PropSchema.TestHarness` module
     to generate tests.
 
   ## Example
@@ -74,12 +74,12 @@ defmodule PropSchema do
 
   @doc """
   Declares an `Ecto.Schema` with additional options that are used to generate property tests
-  using `PropSchema.Executor`.
+  using `PropSchema.TestHarness`.
 
   ## Field Declaration
 
   When a field is declared with `prop_field/3` it will add the extra values as conditions for generating property tests.
-  It is possible to declare a field just by using `Ecto.Schema.field/3` however `PropSchema.Executor` will
+  It is possible to declare a field just by using `Ecto.Schema.field/3` however `PropSchema.TestHarness` will
   not know about it, and tests will not be generated for that field.
 
   ## Examples
@@ -151,7 +151,7 @@ defmodule PropSchema do
   end
 
   @doc """
-    Declares a field in the schema, processes it for use in `PropSchema.Executor` and then passes it through to `Ecto.Schema.field/3`. See `prop_schema/2` for examples.
+    Declares a field in the schema, processes it for use in `PropSchema.TestHarness` and then passes it through to `Ecto.Schema.field/3`. See `prop_schema/2` for examples.
   """
   @spec prop_field(atom(), atom(), keyword()) :: Types.ast_expression()
   defmacro prop_field(name, type \\ :string, opts \\ []) do
