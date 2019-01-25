@@ -8,9 +8,6 @@ defmodule PropSchema.TestHarness do
   require Generator
 
   @type prop_test_args :: [to_test: atom(), additional_properties: atom()]
-  @type basic_type ::
-          integer() | float() | atom() | reference() | pid() | tuple() | [any()] | String.t()
-  @type ast_expression :: {atom(), Keyword.t(), [ast_expression()]} | basic_type()
 
   @doc """
   Call in a test file to generate and execute property tests for the given schema, `[to_test: module]`. `[additional_properties: module]` is used to provide properties not yet implemented in the base `PropSchema.BaseProperties` module.
@@ -23,7 +20,7 @@ defmodule PropSchema.TestHarness do
           additional_properties: PropSchema.TestAdditionalProperties
       end
   """
-  @spec __using__(prop_test_args()) :: ast_expression()
+  @spec __using__(prop_test_args()) :: Macro.t()
   defmacro __using__(args) do
     quote do
       use ExUnitProperties

@@ -5,16 +5,6 @@
 An extension of both `Ecto.Schema` and `ExUnitProperties` for auto-generation of changeset property tests.
 Consists of two main modules: `PropSchema` and `PropSchema.TestHarness`
 
-## Installation
-
-```elixir
-def deps do
-  [
-    {:prop_schema, "~> 0.1.0"}
-  ]
-end
-```
-
 ## Usage
 
 #### Look at the documentation for full usage
