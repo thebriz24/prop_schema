@@ -60,7 +60,7 @@ defmodule PropSchema.MixProject do
       extras: ["README.md"],
       groups_for_modules: [
         Generators: [PropSchema.Stream, PropSchema.TestHarness],
-        Customizers: [PropSchema.AdditionalProperties],
+        Customizers: [PropSchema.AdditionalProperties, PropSchema.Modifications],
         Deprecated: [PropSchema.Executor]
       ]
     ]
