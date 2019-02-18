@@ -16,7 +16,7 @@ defmodule PropSchema.Stream do
         require PropSchema.Stream
         PropSchema.Stream.generate_complete_map(PropSchema.ExampleModule, PropSchema.ExampleAdditionalProperties)
 
-        def get_ten(), do: Enum.take(complete(), 10)
+        def get_ten(), do: Enum.take(complete_example_module(), 10)
       end
   """
   @spec generate_complete_map(atom(), atom()) :: Macro.t()
@@ -40,7 +40,7 @@ defmodule PropSchema.Stream do
         require PropSchema.Stream
         PropSchema.Stream.generate_incomplete_map(PropSchema.ExampleModule, :test_int, PropSchema.ExampleAdditionalProperties)
 
-        def get_ten(excluded), do: excluded |> incomplete() |> Enum.take(10)
+        def get_ten(excluded), do: excluded |> incomplete_example_module() |> Enum.take(10)
       end
   """
   @spec generate_incomplete_map(atom(), atom(), atom()) :: Macro.t()
@@ -59,7 +59,7 @@ defmodule PropSchema.Stream do
           require PropSchema.Stream
           PropSchema.Stream.generate_all_incomplete_maps(PropSchema.ExampleModule, PropSchema.ExampleAdditionalProperties)
 
-          def get_ten(excluded), do: excluded |> incomplete() |> Enum.take(10)
+          def get_ten(excluded), do: excluded |> incomplete_example_module() |> Enum.take(10)
         end
   """
   @spec generate_all_incomplete_maps(atom(), atom()) :: Macro.t()
