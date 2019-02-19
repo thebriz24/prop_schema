@@ -46,6 +46,6 @@ defmodule PropSchema.Modifications do
       end
 
   """
-  @callback generate_modification({var :: atom(), [], context:: atom()}, atom()) :: Macro.t()
+  @callback generate_modification({var :: atom(), [], context :: atom()}, atom()) :: Macro.t()
   @optional_callbacks generate_modification: 2
 end
