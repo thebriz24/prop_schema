@@ -14,7 +14,7 @@ defmodule PropSchema.Stream do
 
       defmodule Test do
         require PropSchema.Stream
-        PropSchema.Stream.generate_complete_map(PropSchema.ExampleModule, PropSchema.ExampleAdditionalProperties)
+        PropSchema.Stream.generate_complete_map(PropSchema.ExampleModule, :complete_example_module, PropSchema.ExampleAdditionalProperties)
 
         def get_ten(), do: Enum.take(complete_example_module(), 10)
       end
@@ -40,7 +40,7 @@ defmodule PropSchema.Stream do
 
       defmodule Test do
         require PropSchema.Stream
-        PropSchema.Stream.generate_incomplete_map(PropSchema.ExampleModule, :test_int, PropSchema.ExampleAdditionalProperties)
+        PropSchema.Stream.generate_incomplete_map(PropSchema.ExampleModule, :incomplete_example_module, :test_int, PropSchema.ExampleAdditionalProperties)
 
         def get_ten(excluded), do: excluded |> incomplete_example_module() |> Enum.take(10)
       end
@@ -55,13 +55,13 @@ defmodule PropSchema.Stream do
   end
 
   @doc """
-  Scans the schema and calls `generate_incomplete_map/3` for each field as the `missing_prop`
+  Scans the schema and calls `generate_incomplete_map/4` for each field as the `missing_prop`
 
   ## Example
 
         defmodule Test do
           require PropSchema.Stream
-          PropSchema.Stream.generate_all_incomplete_maps(PropSchema.ExampleModule, PropSchema.ExampleAdditionalProperties)
+          PropSchema.Stream.generate_all_incomplete_maps(PropSchema.ExampleModule, :incomplete_example_module, PropSchema.ExampleAdditionalProperties)
 
           def get_ten(excluded), do: excluded |> incomplete_example_module() |> Enum.take(10)
         end
