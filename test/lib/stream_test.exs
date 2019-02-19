@@ -14,7 +14,7 @@ defmodule PropSchema.StreamTest do
 
   test "Can call complete/0 like any StreamData stream" do
     try do
-      Enum.take(complete(), 10)
+      Enum.take(complete_example_module(), 10)
     rescue
       e -> flunk("Raised #{e}")
     end
@@ -23,7 +23,7 @@ defmodule PropSchema.StreamTest do
   test "Can call all incomplete/1 like any StreamData stream" do
     Enum.each(ExampleModule.__prop_schema__(), fn {exluded, _} ->
       try do
-        Enum.take(incomplete(exluded), 10)
+        Enum.take(incomplete_example_module(exluded), 10)
       rescue
         e -> flunk("Raised #{e}")
       end
