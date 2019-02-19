@@ -2,33 +2,41 @@ defmodule PropSchema.Generator do
   @moduledoc false
 
   alias PropSchema.BaseProperties, as: Properties
+  alias PropSchema.Generator.ExpressionModifier
 
   @type prop_details :: {atom(), %{optional(atom()) => any()}}
   @type prop :: {atom(), prop_details()}
   @type props :: %{optional(atom()) => prop_details()}
-  @type basic_type ::
-          integer() | float() | atom() | reference() | pid() | tuple() | [any()] | String.t()
-  @type ast_expression :: {atom(), Keyword.t(), [ast_expression()]} | basic_type()
 
-  @spec generate_valid_prop_test(atom(), props(), atom()) :: ast_expression()
-  def generate_valid_prop_test(mod, props, additional_props) do
+  @spec generate_valid_prop_test(atom(), props(), atom(), atom()) :: Macro.t()
+  def generate_valid_prop_test(mod, props, additional_props, modifications) do
     generators = generate_complete_map(props, additional_props)
-    generate_prop_test(mod, generators, "valid changeset", valid?())
+    filters = generate_modifications(modifications, nil)
+    generate_prop_test(mod, generators, filters, "valid changeset", valid?())
   end
 
-  @spec generate_valid_prop_test(atom(), prop(), props(), atom()) :: ast_expression()
-  def generate_valid_prop_test(mod, {field, _} = prop, props, additional_props) do
+  @spec generate_valid_prop_test(atom(), prop(), props(), atom(), atom()) :: Macro.t()
+  def generate_valid_prop_test(mod, {field, _} = prop, props, additional_props, modifications) do
     generators = generate_incomplete_map(prop, props, additional_props)
-    generate_prop_test(mod, generators, "valid changeset - missing #{field}", valid?())
+    filters = generate_modifications(modifications, field)
+    generate_prop_test(mod, generators, filters, "valid changeset - missing #{field}", valid?())
   end
 
-  @spec generate_invalid_prop_test(atom(), prop(), props(), atom()) :: ast_expression()
-  def generate_invalid_prop_test(mod, {field, _} = prop, props, additional_props) do
+  @spec generate_invalid_prop_test(atom(), prop(), props(), atom(), atom()) :: Macro.t()
+  def generate_invalid_prop_test(mod, {field, _} = prop, props, additional_props, modifications) do
     generators = generate_incomplete_map(prop, props, additional_props)
-    generate_prop_test(mod, generators, "invalid changeset - missing #{field}", invalid?())
+    filters = generate_modifications(modifications, field)
+
+    generate_prop_test(
+      mod,
+      generators,
+      filters,
+      "invalid changeset - missing #{field}",
+      invalid?()
+    )
   end
 
-  @spec generate_complete_map(props(), atom()) :: ast_expression()
+  @spec generate_complete_map(props(), atom()) :: Macro.t()
   def generate_complete_map(props, additional_props) do
     generators = generate_props(props, additional_props)
 
@@ -37,7 +45,7 @@ defmodule PropSchema.Generator do
     end
   end
 
-  @spec generate_incomplete_map(prop(), props(), atom()) :: ast_expression()
+  @spec generate_incomplete_map(prop(), props(), atom()) :: Macro.t()
   def generate_incomplete_map(prop, props, additional_props) do
     generators = generate_props(prop, props, additional_props)
 
@@ -46,17 +54,23 @@ defmodule PropSchema.Generator do
     end
   end
 
-  defp generate_prop_test(mod, generators, message, correct?) do
-    quote do
-      @tag generated: true
-      property unquote(message) do
-        check all map <- unquote(generators) do
-          changeset = unquote(mod).changeset(struct(unquote(mod)), map)
+  defp generate_modifications(nil, _excluded), do: nil
+  defp generate_modifications(mod, excluded) when is_atom(mod), do: mod.generate_modification(Macro.var(:map, __MODULE__), excluded)
 
-          unquote(correct?).(changeset)
+  defp generate_prop_test(mod, generators, modifications, message, correct?) do
+    ast =
+      quote do
+        @tag generated: true
+        property unquote(message) do
+          check all map <- unquote(generators) do
+            changeset = unquote(mod).changeset(struct(unquote(mod)), map)
+
+            unquote(correct?).(changeset)
+          end
         end
       end
-    end
+
+    ExpressionModifier.inject_argmument(ast, modifications)
   end
 
   defp generate_props(props, additional_props) do

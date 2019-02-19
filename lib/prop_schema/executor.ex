@@ -59,7 +59,7 @@ defmodule PropSchema.Executor do
   end
 
   def __create_prop_test__(mod, :all_fields, props, additional_props) do
-    Generator.generate_valid_prop_test(mod, props, additional_props)
+    Generator.generate_valid_prop_test(mod, props, additional_props, nil)
   end
 
   def __create_prop_test__(mod, props, additional_props) do
@@ -67,13 +67,13 @@ defmodule PropSchema.Executor do
       props,
       fn
         {_, {_, %{default: default, required: true}}} = prop when not is_nil(default) ->
-          Generator.generate_valid_prop_test(mod, prop, props, additional_props)
+          Generator.generate_valid_prop_test(mod, prop, props, additional_props, nil)
 
         {_, {_, %{required: true}}} = prop ->
-          Generator.generate_invalid_prop_test(mod, prop, props, additional_props)
+          Generator.generate_invalid_prop_test(mod, prop, props, additional_props, nil)
 
         prop ->
-          Generator.generate_valid_prop_test(mod, prop, props, additional_props)
+          Generator.generate_valid_prop_test(mod, prop, props, additional_props, nil)
       end
     )
   end

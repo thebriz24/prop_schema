@@ -1,9 +1,9 @@
 defmodule Mix.Tasks.PropSchema.Print do
   use Mix.Task
   alias Mix.Tasks.Compile
-  alias PropSchema.Executor
+  alias PropSchema.TestHarness
   require Logger
-  require Executor
+  require TestHarness
 
   @moduledoc """
     Prints the property tests generated for the given module. Use `--help` to see usage directions.
@@ -65,6 +65,8 @@ defmodule Mix.Tasks.PropSchema.Print do
       output_path         Will output the results to a file at the given path. If file doesn't exist, it will be created
       additional_props    A module where the custom properties you have written are found. Make sure the compiler will
                             actually compile the module for the dev environemnt.
+      filters             A module where the custom filters you have written are found. Make sure the compiler will
+                            actually compile the module for the dev environemnt.
   """
 
   def run(args) do
@@ -73,9 +75,10 @@ defmodule Mix.Tasks.PropSchema.Print do
     Compile.run(args)
     module = get_module(argv)
     additional = get_additional(parsed)
+    filters = get_filters(parsed)
 
     module
-    |> get_prop_tests(additional)
+    |> get_prop_tests(additional, filters)
     |> Enum.map(&Macro.to_string(&1))
     |> Enum.join("\n\n")
     |> output(module, parsed)
@@ -84,7 +87,12 @@ defmodule Mix.Tasks.PropSchema.Print do
   defp parse_args(args) do
     {parsed, argv, errors} =
       OptionParser.parse(args,
-        strict: [help: :boolean, output_path: :string, additional_props: :string]
+        strict: [
+          help: :boolean,
+          output_path: :string,
+          additional_props: :string,
+          filters: :string
+        ]
       )
 
     Enum.each(errors, fn error -> Logger.warn("Erroneous option given: #{inspect(error)}") end)
@@ -111,18 +119,30 @@ defmodule Mix.Tasks.PropSchema.Print do
     end
   end
 
-  defp get_prop_tests(module, additional) do
+  defp get_filters(parsed) do
+    case Keyword.get(parsed, :filters) do
+      nil ->
+        nil
+
+      additional ->
+        String.to_existing_atom("Elixir." <> additional)
+    end
+  end
+
+  defp get_prop_tests(module, additional, filters) do
     List.flatten([
-      Executor.__create_prop_test__(
+      TestHarness.__create_prop_test__(
         module,
         :all_fields,
         module.__prop_schema__(),
-        additional
+        additional,
+        filters
       ),
-      Executor.__create_prop_test__(
+      TestHarness.__create_prop_test__(
         module,
         module.__prop_schema__(),
-        additional
+        additional,
+        filters
       )
     ])
   end

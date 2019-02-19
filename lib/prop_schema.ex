@@ -62,8 +62,6 @@ defmodule PropSchema do
   Or for a more realistic example see example: [module](https://github.com/podium/prop_schema/blob/master/lib/prop_schema/examples/animagus/csv_mapping.ex), [properties](https://github.com/podium/prop_schema/blob/master/lib/prop_schema/examples/animagus/csv_mapping_properties.ex), and [generated tests](https://github.com/podium/prop_schema/blob/master/lib/prop_schema/examples/animagus/results_of_print.ex).
   """
 
-  alias PropSchema.Types
-
   defmacro __using__(_opts) do
     quote do
       import PropSchema, only: [prop_schema: 2, prop_embedded: 1, prop_embedded_schema: 1]
@@ -90,7 +88,7 @@ defmodule PropSchema do
         field(:example_float, :float)
       end
   """
-  @spec prop_schema(String.t(), do: Types.ast_expression()) :: Types.ast_expression()
+  @spec prop_schema(String.t(), do: Macro.t()) :: Macro.t()
   defmacro prop_schema(source, do: block) do
     schema(source, block)
   end
@@ -99,7 +97,7 @@ defmodule PropSchema do
   Deprecated in favor of `prop_embedded_schema/1`, see for usage details.
   """
   @deprecated "Use prop_embedded_schema/1 instead"
-  @spec prop_embedded(do: Types.ast_expression()) :: Types.ast_expression()
+  @spec prop_embedded(do: Macro.t()) :: Macro.t()
   defmacro prop_embedded(do: block) do
     embedded_schema(block)
   end
@@ -115,7 +113,7 @@ defmodule PropSchema do
         field(:example_float, :float)
       end
   """
-  @spec prop_embedded_schema(do: Types.ast_expression()) :: Types.ast_expression()
+  @spec prop_embedded_schema(do: Macro.t()) :: Macro.t()
   defmacro prop_embedded_schema(do: block) do
     embedded_schema(block)
   end
@@ -153,7 +151,7 @@ defmodule PropSchema do
   @doc """
     Declares a field in the schema, processes it for use in `PropSchema.TestHarness` and then passes it through to `Ecto.Schema.field/3`. See `prop_schema/2` for examples.
   """
-  @spec prop_field(atom(), atom(), keyword()) :: Types.ast_expression()
+  @spec prop_field(atom(), atom(), keyword()) :: Macro.t()
   defmacro prop_field(name, type \\ :string, opts \\ []) do
     quote do
       PropSchema.__field__(__MODULE__, unquote(name), unquote(type), unquote(opts))
@@ -189,7 +187,7 @@ defmodule PropSchema do
   Declares a field in `__prop_schema__/2` which will either be the `name` with `"_id"` appended or the value of the `:foreign_key` option.
   A UUID generator is provided for uid ids.
   """
-  @spec prop_belongs_to(atom(), module(), Keyword.t()) :: Types.ast_expression()
+  @spec prop_belongs_to(atom(), module(), Keyword.t()) :: Macro.t()
   defmacro prop_belongs_to(name, queryable, opts \\ []) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_belongs_to_options, k) end)
@@ -221,7 +219,7 @@ defmodule PropSchema do
   The only addition to the normal `Ecto.Schema.has_one/3` call is the `:additional_props` option which will tell the generator where
   to find the additional props for building the associated struct.
   """
-  @spec prop_has_one(atom(), module(), Keyword.t()) :: Types.ast_expression()
+  @spec prop_has_one(atom(), module(), Keyword.t()) :: Macro.t()
   defmacro prop_has_one(name, queryable, opts \\ []) do
     ecto_opts = Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_has_options, k) end)
 
@@ -242,7 +240,7 @@ defmodule PropSchema do
   The only addition to the normal `Ecto.Schema.has_many/3` call is the `:additional_props` option which will tell the generator where
   to find the additional props for building the associated structs.
   """
-  @spec prop_has_many(atom(), module(), Keyword.t()) :: Types.ast_expression()
+  @spec prop_has_many(atom(), module(), Keyword.t()) :: Macro.t()
   defmacro prop_has_many(name, queryable, opts \\ []) do
     ecto_opts = Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_has_options, k) end)
 
@@ -275,7 +273,7 @@ defmodule PropSchema do
   associated struct's `__prop_schema__/2` results will be modified so as to not generate it's associated many_to_many
   structs due to the endless recursion that would cause.
   """
-  @spec prop_many_to_many(atom(), module(), Keyword.t()) :: Types.ast_expression()
+  @spec prop_many_to_many(atom(), module(), Keyword.t()) :: Macro.t()
   defmacro prop_many_to_many(name, queryable, opts \\ []) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_many_to_many_options, k) end)
@@ -298,7 +296,7 @@ defmodule PropSchema do
     The only addition to the normal `Ecto.Schema.embeds_one/3` call is the `:additional_props` option which will tell the generator where
     to find the additional props for building the associated struct.
   """
-  @spec prop_embeds_one(atom(), module(), Keyword.t()) :: Types.ast_expression()
+  @spec prop_embeds_one(atom(), module(), Keyword.t()) :: Macro.t()
   defmacro prop_embeds_one(name, queryable, opts \\ []) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_one_options, k) end)
@@ -322,7 +320,7 @@ defmodule PropSchema do
   The only addition to the normal `Ecto.Schema.embeds_many/3` call is the `:additional_props` option which will tell the generator where
   to find the additional props for building the associated structs.
   """
-  @spec prop_embeds_many(atom(), module(), Keyword.t()) :: Types.ast_expression()
+  @spec prop_embeds_many(atom(), module(), Keyword.t()) :: Macro.t()
   defmacro prop_embeds_many(name, queryable, opts \\ []) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_many_options, k) end)

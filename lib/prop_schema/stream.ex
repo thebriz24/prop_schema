@@ -7,10 +7,6 @@ defmodule PropSchema.Stream do
   alias PropSchema.Generator
   require Generator
 
-  @type basic_type ::
-          integer() | float() | atom() | reference() | pid() | tuple() | [any()] | String.t()
-  @type ast_expression :: {atom(), Keyword.t(), [ast_expression()]} | basic_type()
-
   @doc """
   Creates the quoted fixed_map expression like you would find in the property tests but can be used at your discretion.
 
@@ -23,7 +19,7 @@ defmodule PropSchema.Stream do
         def get_ten(), do: Enum.take(complete(), 10)
       end
   """
-  @spec generate_complete_map(atom(), atom()) :: ast_expression()
+  @spec generate_complete_map(atom(), atom()) :: Macro.t()
   defmacro generate_complete_map(mod, additional_props \\ nil) do
     schema = Macro.expand_once(mod, __ENV__).__prop_schema__()
     adds = Macro.expand_once(additional_props, __ENV__)
@@ -47,7 +43,7 @@ defmodule PropSchema.Stream do
         def get_ten(excluded), do: excluded |> incomplete() |> Enum.take(10)
       end
   """
-  @spec generate_incomplete_map(atom(), atom(), atom()) :: ast_expression()
+  @spec generate_incomplete_map(atom(), atom(), atom()) :: Macro.t()
   defmacro generate_incomplete_map(mod, excluded, additional_props \\ nil) do
     schema = Macro.expand_once(mod, __ENV__)
     adds = Macro.expand_once(additional_props, __ENV__)
@@ -66,7 +62,7 @@ defmodule PropSchema.Stream do
           def get_ten(excluded), do: excluded |> incomplete() |> Enum.take(10)
         end
   """
-  @spec generate_all_incomplete_maps(atom(), atom()) :: ast_expression()
+  @spec generate_all_incomplete_maps(atom(), atom()) :: Macro.t()
   defmacro generate_all_incomplete_maps(mod, additional_props \\ nil) do
     schema = Macro.expand_once(mod, __ENV__)
     adds = Macro.expand_once(additional_props, __ENV__)
