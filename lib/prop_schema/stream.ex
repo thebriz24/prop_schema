@@ -88,8 +88,4 @@ defmodule PropSchema.Stream do
       end
     end
   end
-
-  #  defp mod_name(mod) do
-  #    mod |> elem(2) |> List.last() |> Atom.to_string() |> Macro.underscore()
-  #  end
 end
