@@ -1,7 +1,7 @@
 defmodule PropSchema.MixProject do
   use Mix.Project
 
-  @version "1.0.0"
+  @version "1.0.1"
 
   def project do
     [
@@ -37,7 +37,7 @@ defmodule PropSchema.MixProject do
   end
 
   def description do
-    "An extension on `Ecto.Schema` where you can provide additional options, which will be read by the corresponding `PropSchema.Executor` module, used in the test files to generate property tests."
+    "An extension on `Ecto.Schema` where you can provide additional options, which will be read by the corresponding `PropSchema.TestHarness` module, used in the test files to generate property tests."
   end
 
   defp package do

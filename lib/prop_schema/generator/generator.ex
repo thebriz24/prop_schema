@@ -55,7 +55,9 @@ defmodule PropSchema.Generator do
   end
 
   defp generate_modifications(nil, _excluded), do: nil
-  defp generate_modifications(mod, excluded) when is_atom(mod), do: mod.generate_modification(Macro.var(:map, __MODULE__), excluded)
+
+  defp generate_modifications(mod, excluded) when is_atom(mod),
+    do: mod.generate_modification(Macro.var(:map, __MODULE__), excluded)
 
   defp generate_prop_test(mod, generators, modifications, message, correct?) do
     ast =

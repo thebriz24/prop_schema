@@ -14,18 +14,20 @@ defmodule PropSchema.Stream do
 
       defmodule Test do
         require PropSchema.Stream
-        PropSchema.Stream.generate_complete_map(PropSchema.ExampleModule, PropSchema.ExampleAdditionalProperties)
+        PropSchema.Stream.generate_complete_map(PropSchema.ExampleModule, :complete_example_module, PropSchema.ExampleAdditionalProperties)
 
         def get_ten(), do: Enum.take(complete_example_module(), 10)
       end
   """
-  @spec generate_complete_map(atom(), atom()) :: Macro.t()
-  defmacro generate_complete_map(mod, additional_props \\ nil) do
+  @spec generate_complete_map(atom(), atom(), atom()) :: Macro.t()
+  defmacro generate_complete_map(mod, name, additional_props \\ nil)
+
+  defmacro generate_complete_map(mod, name, additional_props) when is_atom(name) do
     schema = Macro.expand_once(mod, __ENV__).__prop_schema__()
     adds = Macro.expand_once(additional_props, __ENV__)
 
     quote do
-      defp unquote({:"complete_#{mod_name(mod)}", [context: Elixir], Elixir}) do
+      defp unquote({name, [context: Elixir], Elixir}) do
         unquote(Generator.generate_complete_map(schema, adds))
       end
     end
@@ -38,52 +40,52 @@ defmodule PropSchema.Stream do
 
       defmodule Test do
         require PropSchema.Stream
-        PropSchema.Stream.generate_incomplete_map(PropSchema.ExampleModule, :test_int, PropSchema.ExampleAdditionalProperties)
+        PropSchema.Stream.generate_incomplete_map(PropSchema.ExampleModule, :incomplete_example_module, :test_int, PropSchema.ExampleAdditionalProperties)
 
         def get_ten(excluded), do: excluded |> incomplete_example_module() |> Enum.take(10)
       end
   """
-  @spec generate_incomplete_map(atom(), atom(), atom()) :: Macro.t()
-  defmacro generate_incomplete_map(mod, excluded, additional_props \\ nil) do
+  @spec generate_incomplete_map(atom(), atom(), atom(), atom()) :: Macro.t()
+  defmacro generate_incomplete_map(mod, name, excluded, additional_props \\ nil)
+
+  defmacro generate_incomplete_map(mod, name, excluded, additional_props) when is_atom(name) do
     schema = Macro.expand_once(mod, __ENV__)
     adds = Macro.expand_once(additional_props, __ENV__)
-    quoted_map(mod, schema, excluded, adds)
+    quoted_map(name, schema, excluded, adds)
   end
 
   @doc """
-  Scans the schema and calls `generate_incomplete_map/3` for each field as the `missing_prop`
+  Scans the schema and calls `generate_incomplete_map/4` for each field as the `missing_prop`
 
   ## Example
 
         defmodule Test do
           require PropSchema.Stream
-          PropSchema.Stream.generate_all_incomplete_maps(PropSchema.ExampleModule, PropSchema.ExampleAdditionalProperties)
+          PropSchema.Stream.generate_all_incomplete_maps(PropSchema.ExampleModule, :incomplete_example_module, PropSchema.ExampleAdditionalProperties)
 
           def get_ten(excluded), do: excluded |> incomplete_example_module() |> Enum.take(10)
         end
   """
-  @spec generate_all_incomplete_maps(atom(), atom()) :: Macro.t()
-  defmacro generate_all_incomplete_maps(mod, additional_props \\ nil) do
+  @spec generate_all_incomplete_maps(atom(), atom(), atom()) :: Macro.t()
+  defmacro generate_all_incomplete_maps(mod, name, additional_props \\ nil)
+
+  defmacro generate_all_incomplete_maps(mod, name, additional_props) when is_atom(name) do
     schema = Macro.expand_once(mod, __ENV__)
     adds = Macro.expand_once(additional_props, __ENV__)
-    quoted = Enum.map(schema.__prop_schema__(), &quoted_map(mod, schema, &1, adds))
+    quoted = Enum.map(schema.__prop_schema__(), &quoted_map(name, schema, &1, adds))
     {:__block__, [], quoted}
   end
 
-  defp quoted_map(mod, schema, {excluded, _}, additional_props),
-    do: quoted_map(mod, schema, excluded, additional_props)
+  defp quoted_map(name, schema, {excluded, _}, additional_props),
+    do: quoted_map(name, schema, excluded, additional_props)
 
-  defp quoted_map(mod, schema, excluded, additional_props) do
+  defp quoted_map(name, schema, excluded, additional_props) do
     quote do
-      defp unquote(:"incomplete_#{mod_name(mod)}")(unquote(excluded)) do
+      defp unquote(name)(unquote(excluded)) do
         unquote(
           Generator.generate_incomplete_map(excluded, schema.__prop_schema__(), additional_props)
         )
       end
     end
-  end
-
-  defp mod_name(mod) do
-    mod |> elem(2) |> List.last() |> Atom.to_string() |> Macro.underscore()
   end
 end
