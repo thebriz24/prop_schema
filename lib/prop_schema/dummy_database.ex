@@ -14,21 +14,25 @@ defmodule PropSchema.DummyDatabase do
   * `additional_properties`: The module where the additional defined properties (using the `PropSchema.AdditionalProperties`
     behaviour) are located. It is optional.
   * `repo`: The module where `Ecto.Repo` is implemented.
+  * `otp_app`: The data layer app that supervises the `repo`
   """
   defmacro __using__(usage_args) do
     quote do
       use Mix.Task
 
-      alias PropSchema.Stream
-      require Stream
+      alias PropSchema.Stream, as: PSStream
+      require PSStream
       require Logger
 
-      Stream.generate_complete_map(
+      PSStream.generate_complete_map(
         unquote(usage_args[:module]),
+        :complete,
         unquote(usage_args[:additional_properties])
       )
 
       def run(args) do
+        Application.ensure_all_started(unquote(usage_args[:otp_app]))
+
         generate_and_insert(
           unquote(usage_args[:module]),
           unquote(usage_args[:repo]),
@@ -38,7 +42,7 @@ defmodule PropSchema.DummyDatabase do
       end
 
       defp parse_count(args) do
-        {[count: count]} = OptionParser.parse(args, strict: [count: :integer])
+        {[count: count], _, _} = OptionParser.parse(args, strict: [count: :integer])
         count
       end
 
@@ -61,19 +65,28 @@ defmodule PropSchema.DummyDatabase do
       end
 
       defp generate(module, count) do
-        records =
-          __MODULE__
-          |> apply(:"complete_#{mod_name(module)}", [])
-          |> Enum.take(count)
-
-        Logger.debug(fn -> "Generated #{count} new records" end)
+        records = Stream.take(complete(), count)
+        Logger.debug(fn -> "Generating #{count} new records" end)
         records
       end
 
       defp insert(items, repo, module) do
-        {count, _} = repo.insert_all(module, items, on_conflict: :nothing)
-        Logger.debug(fn -> "Inserted #{count} new records without conflicts" end)
-        count
+        successes =
+          items
+          |> Stream.map(&verify_and_insert(&1, repo, module))
+          |> Enum.count(fn
+            {:ok, _} -> true
+            {:error, _} -> false
+          end)
+
+        Logger.debug(fn -> "Inserted #{successes} new records without conflicts" end)
+        successes
+      end
+
+      defp verify_and_insert(item, repo, module) do
+        module.__struct__()
+        |> module.changeset(item)
+        |> repo.insert()
       end
 
       defp mod_name(mod) do
