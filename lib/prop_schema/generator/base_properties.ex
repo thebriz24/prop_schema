@@ -84,13 +84,13 @@ defmodule PropSchema.BaseProperties do
     end
   end
 
-  def generate_prop(field, :utc_datetime, %{required: true}) do
+  def generate_prop(field, :utc_datetime, %{now: true, required: true}) do
     quote do
       {unquote(Atom.to_string(field)), unquote(current_datetime())}
     end
   end
 
-  def generate_prop(field, :utc_datetime, %{required: false}) do
+  def generate_prop(field, :utc_datetime, %{now: true, required: false}) do
     quote do
       {unquote(Atom.to_string(field)), StreamData.one_of([unquote(current_datetime()), StreamData.constant(nil)])}
     end
