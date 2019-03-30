@@ -6,6 +6,7 @@ defmodule PropSchema.BaseProperties do
   # See `PropSchema.AdditionalProperties` for how to add to this collection or override any of these.
 
   alias PropSchema.Generator
+  alias StreamData.LazyTree
 
   @doc """
   Covers a few cases of the `integer` and `string` types. For integers `required` and `positive` are provided. For strings `required` and `string_type` are provided.
@@ -68,6 +69,30 @@ defmodule PropSchema.BaseProperties do
   def generate_prop(field, :id, %{type: :binary_id}) do
     quote do
       {unquote(Atom.to_string(field)), unquote(uuid_generator())}
+    end
+  end
+
+  def generate_prop(field, :binary_id, %{required: true}) do
+    quote do
+      {unquote(Atom.to_string(field)), unquote(uuid_generator())}
+    end
+  end
+
+  def generate_prop(field, :binary_id, %{required: false}) do
+    quote do
+      {unquote(Atom.to_string(field)), StreamData.one_of([unquote(uuid_generator()), StreamData.constant(nil)])}
+    end
+  end
+
+  def generate_prop(field, :utc_datetime, %{now: true, required: true}) do
+    quote do
+      {unquote(Atom.to_string(field)), unquote(current_datetime())}
+    end
+  end
+
+  def generate_prop(field, :utc_datetime, %{now: true, required: false}) do
+    quote do
+      {unquote(Atom.to_string(field)), StreamData.one_of([unquote(current_datetime()), StreamData.constant(nil)])}
     end
   end
 
@@ -148,6 +173,14 @@ defmodule PropSchema.BaseProperties do
         |> List.insert_at(8, ?-)
         |> List.to_string()
       end
+    end
+  end
+
+  defp current_datetime do
+    quote do
+      %StreamData{
+        generator: fn _seed, _size -> %LazyTree{root: DateTime.utc_now()} end
+      }
     end
   end
 end
