@@ -6,7 +6,18 @@ defmodule Mix.Tasks.PropSchema.Print do
   require TestHarness
 
   @moduledoc """
-    Prints the property tests generated for the given module. Use `--help` to see usage directions.
+  ## Usage:
+    `mix prop_schema.print <module> [options]`
+
+    Where `module` is the PropSchema module for which tests will be generated.
+
+  ## Options:
+
+    output_path         Will output the results to a file at the given path. If file doesn't exist, it will be created
+    additional_props    A module where the custom properties you have written are found. Make sure the compiler will
+                          actually compile the module for the dev environemnt.
+    filters             A module where the custom filters you have written are found. Make sure the compiler will
+                          actually compile the module for the dev environemnt.
 
   ## Example
 
@@ -54,20 +65,7 @@ defmodule Mix.Tasks.PropSchema.Print do
         end
   """
 
-  @shortdoc """
-
-    Usage: `mix prop_schema.print <module> [options]`
-
-    Where `module` is the PropSchema module for which tests will be generated.
-
-    Options:
-
-      output_path         Will output the results to a file at the given path. If file doesn't exist, it will be created
-      additional_props    A module where the custom properties you have written are found. Make sure the compiler will
-                            actually compile the module for the dev environemnt.
-      filters             A module where the custom filters you have written are found. Make sure the compiler will
-                            actually compile the module for the dev environemnt.
-  """
+  @shortdoc "Prints out the test file that would be generated for the given module during the testing runtime."
 
   def run(args) do
     {parsed, argv} = parse_args(args)
