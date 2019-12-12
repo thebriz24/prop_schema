@@ -46,6 +46,37 @@ defmodule PropSchema.BaseProperties do
 
   def generate_prop(field, :integer, _), do: generate_prop(field, :integer, %{required: false})
 
+  def generate_prop(field, :float, %{positive: true, required: true}) do
+    quote do
+      {unquote(Atom.to_string(field)), StreamData.float(min: 0)}
+    end
+  end
+
+  def generate_prop(field, :float, %{required: true}) do
+    quote do
+      {unquote(Atom.to_string(field)), StreamData.float()}
+    end
+  end
+
+  def generate_prop(field, :float, %{positive: true, required: false}) do
+    quote do
+      {unquote(Atom.to_string(field)),
+       StreamData.one_of([StreamData.float(min: 0), StreamData.constant(nil)])}
+    end
+  end
+
+  def generate_prop(field, :float, %{required: false}) do
+    quote do
+      {unquote(Atom.to_string(field)),
+       StreamData.one_of([StreamData.float(), StreamData.constant(nil)])}
+    end
+  end
+
+  def generate_prop(field, :float, %{positive: true}),
+    do: generate_prop(field, :float, %{positive: true, required: false})
+
+  def generate_prop(field, :float, _), do: generate_prop(field, :integer, %{required: false})
+
   def generate_prop(field, :string, %{string_type: type, required: true})
       when type == :ascii or type == :alphanumeric do
     quote do
