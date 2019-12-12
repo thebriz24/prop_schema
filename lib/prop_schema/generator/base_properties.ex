@@ -61,6 +61,22 @@ defmodule PropSchema.BaseProperties do
     end
   end
 
+  def generate_prop(field, :string, %{one_of: options, required: true}) do
+    quote do
+      {unquote(Atom.to_string(field)), StreamData.one_of(unquote(options(options)))}
+    end
+  end
+
+  def generate_prop(field, :string, %{one_of: options, required: false}) do
+    quote do
+      {unquote(Atom.to_string(field)),
+       StreamData.one_of(unquote(options(options)) ++ [StreamData.constant(nil)])}
+    end
+  end
+
+  def generate_prop(field, :string, %{one_of: _} = params),
+    do: generate_prop(field, :string, Map.put(params, :required, false))
+
   def generate_prop(field, :string, %{string_type: type})
       when type == :ascii or type == :alphanumeric do
     generate_prop(field, :string, %{string_type: type, required: false})
@@ -152,6 +168,10 @@ defmodule PropSchema.BaseProperties do
   end
 
   def generate_prop(_field, _type, _opts), do: nil
+
+  defp options(options) do
+    Enum.map(options, fn option -> quote do: StreamData.constant(unquote(option)) end)
+  end
 
   defp uuid_generator do
     quote do
