@@ -290,7 +290,7 @@ defmodule PropSchema do
     end
   end
 
-  @valid_embeds_one_options [:strategy, :on_replace, :source]
+  @valid_embeds_one_options [:strategy, :on_replace, :source, :do]
   @doc """
     Declares a field in `__prop_schema__/2` which corresponds with a provided generator that will build the associated struct for you.
     The only addition to the normal `Ecto.Schema.embeds_one/3` call is the `:additional_props` option which will tell the generator where
@@ -313,7 +313,7 @@ defmodule PropSchema do
     end
   end
 
-  @valid_embeds_many_options [:strategy, :on_replace, :source]
+  @valid_embeds_many_options [:strategy, :on_replace, :source, :do]
 
   @doc """
   Declares a field in `__prop_schema__/2` which corresponds with a provided generator that will build the list of associated structs for you.
