@@ -264,7 +264,7 @@ defmodule PropSchema.BaseProperties do
   defp ensure_at_least_one_char(:ascii) do
     quote do
       StreamData.map(StreamData.string(:ascii), fn string ->
-        :alphanumeric |> StreamData.string(length: 1) |> Enum.take(1) |> Kernel.++(string)
+        :alphanumeric |> StreamData.string(length: 1) |> Enum.take(1) |> Kernel.<>(string)
       end)
     end
   end
