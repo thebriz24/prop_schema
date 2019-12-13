@@ -153,8 +153,15 @@ defmodule PropSchema do
   """
   @spec prop_field(atom(), atom(), keyword()) :: Macro.t()
   defmacro prop_field(name, type \\ :string, opts \\ []) do
+    # IO.inspect(__CALLER__.module, label: name)
     quote do
-      PropSchema.__field__(__MODULE__, unquote(name), unquote(type), unquote(opts))
+      PropSchema.__field__(
+        unquote(__CALLER__.module),
+        unquote(name),
+        unquote(type),
+        unquote(opts)
+      )
+
       field(unquote(name), unquote(type), unquote(opts))
     end
   end
@@ -198,8 +205,9 @@ defmodule PropSchema do
         key -> key
       end
 
+    # IO.inspect(__CALLER__.module, label: name)
     quote do
-      PropSchema.__field__(__MODULE__, unquote(key), :id, unquote(opts))
+      PropSchema.__field__(unquote(__CALLER__.module), unquote(key), :id, unquote(opts))
       belongs_to(unquote(name), unquote(queryable), unquote(ecto_opts))
     end
   end
@@ -223,9 +231,10 @@ defmodule PropSchema do
   defmacro prop_has_one(name, queryable, opts \\ []) do
     ecto_opts = Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_has_options, k) end)
 
+    # IO.inspect(__CALLER__.module, label: name)
     quote do
       PropSchema.__field__(
-        __MODULE__,
+        unquote(__CALLER__.module),
         unquote(name),
         unquote(queryable),
         unquote(opts ++ [cardinality: :one])
@@ -244,9 +253,10 @@ defmodule PropSchema do
   defmacro prop_has_many(name, queryable, opts \\ []) do
     ecto_opts = Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_has_options, k) end)
 
+    # IO.inspect(__CALLER__.module, label: name)
     quote do
       PropSchema.__field__(
-        __MODULE__,
+        unquote(__CALLER__.module),
         unquote(name),
         unquote(queryable),
         unquote(opts ++ [cardinality: :many])
@@ -278,9 +288,10 @@ defmodule PropSchema do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_many_to_many_options, k) end)
 
+    # IO.inspect(__CALLER__.module, label: name)
     quote do
       PropSchema.__field__(
-        __MODULE__,
+        unquote(__CALLER__.module),
         unquote(name),
         unquote(queryable),
         unquote(opts ++ [cardinality: :many_to_many, disabled: false])
@@ -290,20 +301,26 @@ defmodule PropSchema do
     end
   end
 
-  @valid_embeds_one_options [:strategy, :on_replace, :source, :do]
+  @valid_embeds_one_options [:strategy, :on_replace, :source]
   @doc """
     Declares a field in `__prop_schema__/2` which corresponds with a provided generator that will build the associated struct for you.
     The only addition to the normal `Ecto.Schema.embeds_one/3` call is the `:additional_props` option which will tell the generator where
     to find the additional props for building the associated struct.
   """
   @spec prop_embeds_one(atom(), module(), Keyword.t()) :: Macro.t()
-  defmacro prop_embeds_one(name, queryable, opts \\ []) do
+  defmacro prop_embeds_one(name, queryable, opts \\ [])
+
+  defmacro prop_embeds_one(name, queryable, do: block) do
+    quote do: prop_embeds_one(unquote(name), unquote(queryable), [], do: unquote(block))
+  end
+
+  defmacro prop_embeds_one(name, queryable, opts) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_one_options, k) end)
 
     quote do
       PropSchema.__field__(
-        __MODULE__,
+        unquote(__CALLER__.module),
         unquote(name),
         unquote(queryable),
         unquote(opts ++ [embeds: :one])
@@ -313,7 +330,30 @@ defmodule PropSchema do
     end
   end
 
-  @valid_embeds_many_options [:strategy, :on_replace, :source, :do]
+  defmacro prop_embeds_one(name, queryable, opts, do: block) do
+    ecto_opts =
+      Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_one_options, k) end)
+
+    quote do
+      PropSchema.__field__(
+        unquote(__CALLER__.module),
+        unquote(name),
+        unquote(queryable),
+        unquote(opts ++ [embeds: :one])
+      )
+
+      PropSchema.__embeds_module__(
+        __ENV__,
+        unquote(queryable),
+        unquote(opts),
+        unquote(Macro.escape(block))
+      )
+
+      embeds_one(unquote(name), unquote(queryable), unquote(ecto_opts))
+    end
+  end
+
+  @valid_embeds_many_options [:strategy, :on_replace, :source]
 
   @doc """
   Declares a field in `__prop_schema__/2` which corresponds with a provided generator that will build the list of associated structs for you.
@@ -321,13 +361,19 @@ defmodule PropSchema do
   to find the additional props for building the associated structs.
   """
   @spec prop_embeds_many(atom(), module(), Keyword.t()) :: Macro.t()
-  defmacro prop_embeds_many(name, queryable, opts \\ []) do
+  defmacro prop_embeds_many(name, queryable, opts \\ [])
+
+  defmacro prop_embeds_many(name, queryable, do: block) do
+    quote do: prop_embeds_many(unquote(name), unquote(queryable), [], do: unquote(block))
+  end
+
+  defmacro prop_embeds_many(name, queryable, opts) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_many_options, k) end)
 
     quote do
       PropSchema.__field__(
-        __MODULE__,
+        unquote(__CALLER__.module),
         unquote(name),
         unquote(queryable),
         unquote(opts ++ [embeds: :many])
@@ -335,5 +381,46 @@ defmodule PropSchema do
 
       embeds_many(unquote(name), unquote(queryable), unquote(ecto_opts))
     end
+  end
+
+  defmacro prop_embeds_many(name, queryable, opts, do: block) do
+    ecto_opts =
+      Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_many_options, k) end)
+
+    quote do
+      PropSchema.__field__(
+        unquote(__CALLER__.module),
+        unquote(name),
+        unquote(queryable),
+        unquote(opts ++ [embeds: :many])
+      )
+
+      PropSchema.__embeds_module__(
+        __ENV__,
+        unquote(queryable),
+        unquote(opts),
+        unquote(Macro.escape(block))
+      )
+
+      embeds_many(unquote(name), unquote(queryable), unquote(ecto_opts))
+    end
+  end
+
+  def __embeds_module__(env, name, opts, block) do
+    {pk, opts} = Keyword.pop(opts, :primary_key, {:id, :binary_id, autogenerate: true})
+
+    block =
+      quote do
+        use PropSchema
+
+        @primary_key unquote(Macro.escape(pk))
+        prop_embedded_schema do
+          unquote(block)
+        end
+      end
+
+    module = Module.concat(env.module, name)
+    Module.create(module, block, env)
+    {module, opts}
   end
 end

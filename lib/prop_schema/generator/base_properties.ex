@@ -246,15 +246,6 @@ defmodule PropSchema.BaseProperties do
     Enum.map(options, fn option -> quote do: StreamData.constant(unquote(option)) end)
   end
 
-  defp uuid_generator do
-    quote do
-      StreamData.map(
-        StreamData.string(Enum.concat([?a..?f, ?0..?9]), length: 32),
-        unquote(string_to_uuid())
-      )
-    end
-  end
-
   defp ensure_at_least_one_char(:alphanumeric) do
     quote do
       StreamData.string(:alphanumeric, min_length: 1)
@@ -264,8 +255,21 @@ defmodule PropSchema.BaseProperties do
   defp ensure_at_least_one_char(:ascii) do
     quote do
       StreamData.map(StreamData.string(:ascii), fn string ->
-        :alphanumeric |> StreamData.string(length: 1) |> Enum.take(1) |> Kernel.<>(string)
+        :alphanumeric
+        |> StreamData.string(length: 1)
+        |> Enum.take(1)
+        |> List.first()
+        |> Kernel.<>(string)
       end)
+    end
+  end
+
+  defp uuid_generator do
+    quote do
+      StreamData.map(
+        StreamData.string(Enum.concat([?a..?f, ?0..?9]), length: 32),
+        unquote(string_to_uuid())
+      )
     end
   end
 
