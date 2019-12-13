@@ -184,6 +184,26 @@ defmodule PropSchema.BaseProperties do
        )}
     end
   end
+  
+  def generate_prop(field, module, %{embeds: :one, additional_props: adds})
+      when is_atom(module) do
+    quote do
+      {unquote(Atom.to_string(field)),
+       unquote(Generator.generate_complete_map(module.__prop_schema__(), adds))}
+    end
+  end
+
+  def generate_prop(field, module, %{embeds: :many, additional_props: adds} = map)
+      when is_atom(module) do
+    quote do
+      {unquote(Atom.to_string(field)),
+       StreamData.list_of(
+         unquote(Generator.generate_complete_map(module.__prop_schema__(), adds)),
+         min_length: 1,
+         max_length: unquote(Map.get(map, :max_length, 5))
+       )}
+    end
+  end
 
   def generate_prop(
         field,

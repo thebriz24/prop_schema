@@ -306,7 +306,7 @@ defmodule PropSchema do
         __MODULE__,
         unquote(name),
         unquote(queryable),
-        unquote(opts ++ [cardinality: :one])
+        unquote(opts ++ [embeds: :one])
       )
 
       embeds_one(unquote(name), unquote(queryable), unquote(ecto_opts))
@@ -330,7 +330,7 @@ defmodule PropSchema do
         __MODULE__,
         unquote(name),
         unquote(queryable),
-        unquote(opts ++ [cardinality: :many])
+        unquote(opts ++ [embeds: :many])
       )
 
       embeds_many(unquote(name), unquote(queryable), unquote(ecto_opts))
