@@ -81,7 +81,7 @@ defmodule PropSchema.BaseProperties do
   def generate_prop(field, :string, %{string_type: type, required: true})
       when type == :ascii or type == :alphanumeric do
     quote do
-      {unquote(Atom.to_string(field)), StreamData.string(unquote(type), min_length: 1)}
+      {unquote(Atom.to_string(field)), unquote(ensure_at_least_one_char(type))}
     end
   end
 
@@ -184,7 +184,7 @@ defmodule PropSchema.BaseProperties do
        )}
     end
   end
-  
+
   def generate_prop(field, module, %{embeds: :one, additional_props: adds})
       when is_atom(module) do
     quote do
@@ -252,6 +252,20 @@ defmodule PropSchema.BaseProperties do
         StreamData.string(Enum.concat([?a..?f, ?0..?9]), length: 32),
         unquote(string_to_uuid())
       )
+    end
+  end
+
+  defp ensure_at_least_one_char(:alphanumeric) do
+    quote do
+      StreamData.string(:alphanumeric, min_length: 1)
+    end
+  end
+
+  defp ensure_at_least_one_char(:ascii) do
+    quote do
+      StreamData.map(StreamData.string(:ascii), fn string ->
+        :alphanumeric |> StreamData.string(length: 1) |> Enum.take(1) |> Kernel.++(string)
+      end)
     end
   end
 
