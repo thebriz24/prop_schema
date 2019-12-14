@@ -102,7 +102,7 @@ defmodule PropSchema.BaseProperties do
   end
 
   def generate_prop(field, :string, %{string_type: type, required: false})
-      when type == :ascii or type == :alphanumeric do
+      when type == :url_safe do
     quote do
       {unquote(Atom.to_string(field)),
        StreamData.one_of([
