@@ -153,7 +153,6 @@ defmodule PropSchema do
   """
   @spec prop_field(atom(), atom(), keyword()) :: Macro.t()
   defmacro prop_field(name, type \\ :string, opts \\ []) do
-    # IO.inspect(__CALLER__.module, label: name)
     quote do
       PropSchema.__field__(
         unquote(__CALLER__.module),
@@ -205,7 +204,6 @@ defmodule PropSchema do
         key -> key
       end
 
-    # IO.inspect(__CALLER__.module, label: name)
     quote do
       PropSchema.__field__(unquote(__CALLER__.module), unquote(key), :id, unquote(opts))
       belongs_to(unquote(name), unquote(queryable), unquote(ecto_opts))
@@ -231,7 +229,6 @@ defmodule PropSchema do
   defmacro prop_has_one(name, queryable, opts \\ []) do
     ecto_opts = Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_has_options, k) end)
 
-    # IO.inspect(__CALLER__.module, label: name)
     quote do
       PropSchema.__field__(
         unquote(__CALLER__.module),
@@ -253,7 +250,6 @@ defmodule PropSchema do
   defmacro prop_has_many(name, queryable, opts \\ []) do
     ecto_opts = Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_has_options, k) end)
 
-    # IO.inspect(__CALLER__.module, label: name)
     quote do
       PropSchema.__field__(
         unquote(__CALLER__.module),
@@ -288,7 +284,6 @@ defmodule PropSchema do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_many_to_many_options, k) end)
 
-    # IO.inspect(__CALLER__.module, label: name)
     quote do
       PropSchema.__field__(
         unquote(__CALLER__.module),
@@ -308,13 +303,13 @@ defmodule PropSchema do
     to find the additional props for building the associated struct.
   """
   @spec prop_embeds_one(atom(), module(), Keyword.t()) :: Macro.t()
-  defmacro prop_embeds_one(name, queryable, opts \\ [])
+  defmacro prop_embeds_one(name, schema, opts \\ [])
 
-  defmacro prop_embeds_one(name, queryable, do: block) do
-    quote do: prop_embeds_one(unquote(name), unquote(queryable), [], do: unquote(block))
+  defmacro prop_embeds_one(name, schema, do: block) do
+    quote do: prop_embeds_one(unquote(name), unquote(schema), [], do: unquote(block))
   end
 
-  defmacro prop_embeds_one(name, queryable, opts) do
+  defmacro prop_embeds_one(name, schema, opts) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_one_options, k) end)
 
@@ -322,34 +317,36 @@ defmodule PropSchema do
       PropSchema.__field__(
         unquote(__CALLER__.module),
         unquote(name),
-        unquote(queryable),
+        unquote(schema),
         unquote(opts ++ [embeds: :one])
       )
 
-      embeds_one(unquote(name), unquote(queryable), unquote(ecto_opts))
+      embeds_one(unquote(name), unquote(schema), unquote(ecto_opts))
     end
   end
 
-  defmacro prop_embeds_one(name, queryable, opts, do: block) do
+  defmacro prop_embeds_one(name, schema, opts, do: block) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_one_options, k) end)
+
+    aliased = expand_alias(schema, __CALLER__)
 
     quote do
       PropSchema.__field__(
         unquote(__CALLER__.module),
         unquote(name),
-        unquote(queryable),
+        unquote(aliased),
         unquote(opts ++ [embeds: :one])
       )
 
       PropSchema.__embeds_module__(
         __ENV__,
-        unquote(queryable),
+        unquote(schema),
         unquote(opts),
         unquote(Macro.escape(block))
       )
 
-      embeds_one(unquote(name), unquote(queryable), unquote(ecto_opts))
+      embeds_one(unquote(name), unquote(aliased), unquote(ecto_opts))
     end
   end
 
@@ -361,13 +358,13 @@ defmodule PropSchema do
   to find the additional props for building the associated structs.
   """
   @spec prop_embeds_many(atom(), module(), Keyword.t()) :: Macro.t()
-  defmacro prop_embeds_many(name, queryable, opts \\ [])
+  defmacro prop_embeds_many(name, schema, opts \\ [])
 
-  defmacro prop_embeds_many(name, queryable, do: block) do
-    quote do: prop_embeds_many(unquote(name), unquote(queryable), [], do: unquote(block))
+  defmacro prop_embeds_many(name, schema, do: block) do
+    quote do: prop_embeds_many(unquote(name), unquote(schema), [], do: unquote(block))
   end
 
-  defmacro prop_embeds_many(name, queryable, opts) do
+  defmacro prop_embeds_many(name, schema, opts) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_many_options, k) end)
 
@@ -375,34 +372,36 @@ defmodule PropSchema do
       PropSchema.__field__(
         unquote(__CALLER__.module),
         unquote(name),
-        unquote(queryable),
+        unquote(schema),
         unquote(opts ++ [embeds: :many])
       )
 
-      embeds_many(unquote(name), unquote(queryable), unquote(ecto_opts))
+      embeds_many(unquote(name), unquote(schema), unquote(ecto_opts))
     end
   end
 
-  defmacro prop_embeds_many(name, queryable, opts, do: block) do
+  defmacro prop_embeds_many(name, schema, opts, do: block) do
     ecto_opts =
       Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_embeds_many_options, k) end)
+
+    aliased = expand_alias(schema, __CALLER__)
 
     quote do
       PropSchema.__field__(
         unquote(__CALLER__.module),
         unquote(name),
-        unquote(queryable),
+        unquote(aliased),
         unquote(opts ++ [embeds: :many])
       )
 
       PropSchema.__embeds_module__(
         __ENV__,
-        unquote(queryable),
+        unquote(schema),
         unquote(opts),
         unquote(Macro.escape(block))
       )
 
-      embeds_many(unquote(name), unquote(queryable), unquote(ecto_opts))
+      embeds_many(unquote(name), unquote(aliased), unquote(ecto_opts))
     end
   end
 
@@ -423,4 +422,10 @@ defmodule PropSchema do
     Module.create(module, block, env)
     {module, opts}
   end
+
+  defp expand_alias({:__aliases__, _, [module]}, env),
+    do: Module.concat(env.module, module)
+
+  defp expand_alias(ast, _env),
+    do: ast
 end
