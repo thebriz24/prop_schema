@@ -7,6 +7,7 @@ defmodule PropSchema.BaseProperties do
 
   alias PropSchema.Generator
   alias StreamData.LazyTree
+  @url_safe_characters [?!..?$, ?&..?;, [?=, ?~], ??..?Z, ?_..?z]
 
   @doc """
   Covers a few cases of the `integer` and `string` types. For integers `required` and `positive` are provided. For strings `required` and `string_type` are provided.
@@ -80,7 +81,7 @@ defmodule PropSchema.BaseProperties do
   def generate_prop(field, :string, %{string_type: type, required: true})
       when type == :ascii or type == :alphanumeric do
     quote do
-      {unquote(Atom.to_string(field)), StreamData.string(unquote(type), min_length: 1)}
+      {unquote(Atom.to_string(field)), unquote(ensure_at_least_one_char(type))}
     end
   end
 
@@ -89,6 +90,25 @@ defmodule PropSchema.BaseProperties do
     quote do
       {unquote(Atom.to_string(field)),
        StreamData.one_of([StreamData.string(unquote(type)), StreamData.constant(nil)])}
+    end
+  end
+
+  def generate_prop(field, :string, %{string_type: type, required: true})
+      when type == :url_safe do
+    quote do
+      {unquote(Atom.to_string(field)),
+       StreamData.string(unquote(Enum.concat(@url_safe_characters)), min_length: 1)}
+    end
+  end
+
+  def generate_prop(field, :string, %{string_type: type, required: false})
+      when type == :url_safe do
+    quote do
+      {unquote(Atom.to_string(field)),
+       StreamData.one_of([
+         StreamData.string(unquote(Enum.concat(@url_safe_characters))),
+         StreamData.constant(nil)
+       ])}
     end
   end
 
@@ -127,7 +147,8 @@ defmodule PropSchema.BaseProperties do
 
   def generate_prop(field, :binary_id, %{required: false}) do
     quote do
-      {unquote(Atom.to_string(field)), StreamData.one_of([unquote(uuid_generator()), StreamData.constant(nil)])}
+      {unquote(Atom.to_string(field)),
+       StreamData.one_of([unquote(uuid_generator()), StreamData.constant(nil)])}
     end
   end
 
@@ -139,7 +160,8 @@ defmodule PropSchema.BaseProperties do
 
   def generate_prop(field, :utc_datetime, %{now: true, required: false}) do
     quote do
-      {unquote(Atom.to_string(field)), StreamData.one_of([unquote(current_datetime()), StreamData.constant(nil)])}
+      {unquote(Atom.to_string(field)),
+       StreamData.one_of([unquote(current_datetime()), StreamData.constant(nil)])}
     end
   end
 
@@ -152,6 +174,26 @@ defmodule PropSchema.BaseProperties do
   end
 
   def generate_prop(field, module, %{cardinality: :many, additional_props: adds} = map)
+      when is_atom(module) do
+    quote do
+      {unquote(Atom.to_string(field)),
+       StreamData.list_of(
+         unquote(Generator.generate_complete_map(module.__prop_schema__(), adds)),
+         min_length: 1,
+         max_length: unquote(Map.get(map, :max_length, 5))
+       )}
+    end
+  end
+
+  def generate_prop(field, module, %{embeds: :one, additional_props: adds})
+      when is_atom(module) do
+    quote do
+      {unquote(Atom.to_string(field)),
+       unquote(Generator.generate_complete_map(module.__prop_schema__(), adds))}
+    end
+  end
+
+  def generate_prop(field, module, %{embeds: :many, additional_props: adds} = map)
       when is_atom(module) do
     quote do
       {unquote(Atom.to_string(field)),
@@ -202,6 +244,24 @@ defmodule PropSchema.BaseProperties do
 
   defp options(options) do
     Enum.map(options, fn option -> quote do: StreamData.constant(unquote(option)) end)
+  end
+
+  defp ensure_at_least_one_char(:alphanumeric) do
+    quote do
+      StreamData.string(:alphanumeric, min_length: 1)
+    end
+  end
+
+  defp ensure_at_least_one_char(:ascii) do
+    quote do
+      StreamData.map(StreamData.string(:ascii), fn string ->
+        :alphanumeric
+        |> StreamData.string(length: 1)
+        |> Enum.take(1)
+        |> List.first()
+        |> Kernel.<>(string)
+      end)
+    end
   end
 
   defp uuid_generator do

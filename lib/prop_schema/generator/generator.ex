@@ -64,7 +64,7 @@ defmodule PropSchema.Generator do
       quote do
         @tag generated: true
         property unquote(message) do
-          check all map <- unquote(generators) do
+          check all(map <- unquote(generators)) do
             changeset = unquote(mod).changeset(struct(unquote(mod)), map)
 
             unquote(correct?).(changeset)
