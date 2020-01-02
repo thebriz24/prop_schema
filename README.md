@@ -7,6 +7,7 @@ Consists of two main modules: `PropSchema` and `PropSchema.TestHarness`
 
 ## Usage
 
+
 #### Look at the documentation for full usage
 https://hexdocs.com/prop_schema
 
