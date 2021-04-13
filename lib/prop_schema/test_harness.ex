@@ -10,7 +10,10 @@ defmodule PropSchema.TestHarness do
   @type prop_test_args :: [to_test: atom(), additional_properties: atom(), modifications: atom()]
 
   @doc """
-  Call in a test file to generate and execute property tests for the given schema, `[to_test: module]`. `[additional_properties: module]` is used to provide properties not yet implemented in the base `PropSchema.BaseProperties` module.
+  Call in a test file to generate and execute property tests for the given 
+  schema, `[to_test: module]` or `[schema: module, changeset: {module, function}]`.
+  `[additional_properties: module]` is used to provide properties not yet 
+  implemented in the base `PropSchema.BaseProperties` module.
 
   ## Example
 
@@ -34,20 +37,23 @@ defmodule PropSchema.TestHarness do
 
   @doc false
   defmacro prop_test(args) do
+    schema = schema_from_args(args)
+    changeset = changeset_from_args(args)
+
     quote do
       [
         # credo:disable-for-next-line
         PropSchema.TestHarness.__create_prop_test__(
-          unquote(args[:to_test]),
+          unquote(schema),
+          unquote(changeset),
           :all_fields,
-          unquote(args[:to_test]).__prop_schema__(),
           unquote(args[:additional_properties]),
           unquote(args[:modifications])
         ),
         # credo:disable-for-next-line
         PropSchema.TestHarness.__create_prop_test__(
-          unquote(args[:to_test]),
-          unquote(args[:to_test]).__prop_schema__(),
+          unquote(schema),
+          unquote(changeset),
           unquote(args[:additional_properties]),
           unquote(args[:modifications])
         )
@@ -55,23 +61,51 @@ defmodule PropSchema.TestHarness do
     end
   end
 
-  def __create_prop_test__(mod, :all_fields, props, additional_props, modifications) do
-    Generator.generate_valid_prop_test(mod, props, additional_props, modifications)
+  def __create_prop_test__(schema, changeset, :all_fields, additional_props, modifications) do
+    Generator.generate_valid_prop_test(schema, changeset, additional_props, modifications)
   end
 
-  def __create_prop_test__(mod, props, additional_props, modifications) do
+  def __create_prop_test__({mod, func} = schema, changeset, additional_props, modifications) do
     Enum.map(
-      props,
+      apply(mod, func, []),
       fn
         {_, {_, %{default: default, required: true}}} = prop when not is_nil(default) ->
-          Generator.generate_valid_prop_test(mod, prop, props, additional_props, modifications)
+          Generator.generate_valid_prop_test(
+            schema,
+            changeset,
+            prop,
+            additional_props,
+            modifications
+          )
 
         {_, {_, %{required: true}}} = prop ->
-          Generator.generate_invalid_prop_test(mod, prop, props, additional_props, modifications)
+          Generator.generate_invalid_prop_test(
+            schema,
+            changeset,
+            prop,
+            additional_props,
+            modifications
+          )
 
         prop ->
-          Generator.generate_valid_prop_test(mod, prop, props, additional_props, modifications)
+          Generator.generate_valid_prop_test(
+            schema,
+            changeset,
+            prop,
+            additional_props,
+            modifications
+          )
       end
     )
+  end
+
+  defp schema_from_args(args) do
+    if not is_nil(args[:schema]),
+      do: {args[:schema], :__prop_schema__},
+      else: {args[:to_test], :__prop_schema__}
+  end
+
+  defp changeset_from_args(args) do
+    if not is_nil(args[:changeset]), do: args[:changeset], else: {args[:to_test], :changeset}
   end
 end

@@ -1,7 +1,8 @@
 defmodule PropSchema.MixProject do
   use Mix.Project
 
-  @version "1.0.5"
+  @version "1.1.0"
+  @source_url "https://github.com/thebriz24/prop_schema"
 
   def project do
     [
@@ -42,10 +43,10 @@ defmodule PropSchema.MixProject do
 
   defp package do
     [
-      files: ["lib", "mix.exs", "README.md"],
+      files: ["lib", "mix.exs", "README.md", ".formatter.exs"],
       licenses: ["MIT"],
       links: %{
-        "GitHub" => "https://github.com/podium/prop_schema",
+        "GitHub" => "https://github.com/thebriz24/prop_schema",
         "Docs" => "https://hexdocs.pm/prop_schema/#{@version}"
       },
       maintainers: ["Podium", "Brandon Bennett", "Kelsey Heidarian", "Rob Hughes"],
@@ -56,6 +57,7 @@ defmodule PropSchema.MixProject do
   defp docs do
     [
       main: "PropSchema",
+      source_url: @source_url,
       logo: "misc/pink-p.png",
       extras: ["README.md"],
       groups_for_modules: [
