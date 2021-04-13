@@ -10,7 +10,10 @@ defmodule PropSchema.TestHarness do
   @type prop_test_args :: [to_test: atom(), additional_properties: atom(), modifications: atom()]
 
   @doc """
-  Call in a test file to generate and execute property tests for the given schema, `[to_test: module]`. `[additional_properties: module]` is used to provide properties not yet implemented in the base `PropSchema.BaseProperties` module.
+  Call in a test file to generate and execute property tests for the given 
+  schema, `[to_test: module]` or `[schema: module, changeset: {module, function}]`.
+  `[additional_properties: module]` is used to provide properties not yet 
+  implemented in the base `PropSchema.BaseProperties` module.
 
   ## Example
 
