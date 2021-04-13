@@ -8,27 +8,58 @@ defmodule PropSchema.Generator do
   @type prop :: {atom(), prop_details()}
   @type props :: %{optional(atom()) => prop_details()}
 
-  @spec generate_valid_prop_test(atom(), props(), atom(), atom()) :: Macro.t()
-  def generate_valid_prop_test(mod, props, additional_props, modifications) do
-    generators = generate_complete_map(props, additional_props)
+  @spec generate_valid_prop_test(mfa(), mfa(), atom(), atom()) :: Macro.t()
+  def generate_valid_prop_test(
+        {schema_mod, schema_func} = schema,
+        changeset,
+        additional_props,
+        modifications
+      ) do
+    generators = generate_complete_map(apply(schema_mod, schema_func, []), additional_props)
+
     filters = generate_modifications(modifications, nil)
-    generate_prop_test(mod, generators, filters, "valid changeset", valid?())
+    generate_prop_test(schema, changeset, generators, filters, "valid changeset", valid?())
   end
 
-  @spec generate_valid_prop_test(atom(), prop(), props(), atom(), atom()) :: Macro.t()
-  def generate_valid_prop_test(mod, {field, _} = prop, props, additional_props, modifications) do
-    generators = generate_incomplete_map(prop, props, additional_props)
-    filters = generate_modifications(modifications, field)
-    generate_prop_test(mod, generators, filters, "valid changeset - missing #{field}", valid?())
-  end
+  @spec generate_valid_prop_test(mfa(), mfa(), prop(), atom(), atom()) :: Macro.t()
+  def generate_valid_prop_test(
+        {schema_mod, schema_func} = schema,
+        changeset,
+        {field, _} = prop,
+        additional_props,
+        modifications
+      ) do
+    generators =
+      generate_incomplete_map(prop, apply(schema_mod, schema_func, []), additional_props)
 
-  @spec generate_invalid_prop_test(atom(), prop(), props(), atom(), atom()) :: Macro.t()
-  def generate_invalid_prop_test(mod, {field, _} = prop, props, additional_props, modifications) do
-    generators = generate_incomplete_map(prop, props, additional_props)
     filters = generate_modifications(modifications, field)
 
     generate_prop_test(
-      mod,
+      schema,
+      changeset,
+      generators,
+      filters,
+      "valid changeset - missing #{field}",
+      valid?()
+    )
+  end
+
+  @spec generate_invalid_prop_test(mfa(), mfa(), prop(), atom(), atom()) :: Macro.t()
+  def generate_invalid_prop_test(
+        {schema_mod, schema_func} = schema,
+        changeset,
+        {field, _} = prop,
+        additional_props,
+        modifications
+      ) do
+    generators =
+      generate_incomplete_map(prop, apply(schema_mod, schema_func, []), additional_props)
+
+    filters = generate_modifications(modifications, field)
+
+    generate_prop_test(
+      schema,
+      changeset,
       generators,
       filters,
       "invalid changeset - missing #{field}",
@@ -59,13 +90,24 @@ defmodule PropSchema.Generator do
   defp generate_modifications(mod, excluded) when is_atom(mod),
     do: mod.generate_modification(Macro.var(:map, __MODULE__), excluded)
 
-  defp generate_prop_test(mod, generators, modifications, message, correct?) do
+  defp generate_prop_test(
+         {schema_mod, _},
+         {changeset_mod, changeset_func},
+         generators,
+         modifications,
+         message,
+         correct?
+       ) do
     ast =
       quote do
         @tag generated: true
         property unquote(message) do
           check all(map <- unquote(generators)) do
-            changeset = unquote(mod).changeset(struct(unquote(mod)), map)
+            changeset =
+              apply(unquote(changeset_mod), unquote(changeset_func), [
+                struct(unquote(schema_mod)),
+                map
+              ])
 
             unquote(correct?).(changeset)
           end
