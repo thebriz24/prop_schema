@@ -148,11 +148,31 @@ defmodule PropSchema do
     end
   end
 
+  @valid_field_options [
+    :default,
+    :source,
+    :autogenerate,
+    :read_after_writes,
+    :virtual,
+    :primary_key,
+    :load_in_query,
+    :redact,
+    :foreign_key,
+    :on_replace,
+    :defaults,
+    :type,
+    :where,
+    :references,
+    :skip_default_validation
+  ]
+
   @doc """
     Declares a field in the schema, processes it for use in `PropSchema.TestHarness` and then passes it through to `Ecto.Schema.field/3`. See `prop_schema/2` for examples.
   """
   @spec prop_field(atom(), atom(), keyword()) :: Macro.t()
   defmacro prop_field(name, type \\ :string, opts \\ []) do
+    ecto_opts = Enum.reject(opts, fn {k, _v} -> not Enum.member?(@valid_field_options, k) end)
+
     quote do
       PropSchema.__field__(
         unquote(__CALLER__.module),
@@ -161,7 +181,7 @@ defmodule PropSchema do
         unquote(opts)
       )
 
-      field(unquote(name), unquote(type), unquote(opts))
+      field(unquote(name), unquote(type), unquote(ecto_opts))
     end
   end
 
